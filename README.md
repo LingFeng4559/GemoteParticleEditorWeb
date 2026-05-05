@@ -16,13 +16,9 @@ Please select your language to view the detailed documentation:
 
 ---
 
-## 🔗 相關連結 (Links)
-- **GitHub Repository**: [LingFeng4559/GemoteParticleEditorWeb](https://github.com/LingFeng4559/GemoteParticleEditorWeb)
-- **Live Demo (網站佈署)**: [https://lingfeng4559.github.io/GemoteParticleEditorWeb/](https://lingfeng4559.github.io/GemoteParticleEditorWeb/)
-
----
-
 ## 🚀 快速開始 (Quick Start)
+直接使用網站
+**Live Demo (網站佈署)**: [https://lingfeng4559.github.io/GemoteParticleEditorWeb/](https://lingfeng4559.github.io/GemoteParticleEditorWeb/)
 
 ### Windows
 1. 下載專案並解壓縮。
