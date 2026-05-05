@@ -6,7 +6,7 @@
 
 本项目是基于 **[Ninepin123](https://github.com/Ninepin123)** 所开发的 [MythicMobs 粒子编辑器](https://github.com/Ninepin123/Ninepin123.github.io) 进行深度修改与重构而成。
 
-**特别说明**：原始项目与本重构项目均采用 **AI 辅助生成**。若您在开发过程中遇到任何问题或 bug，欢迎在 [GitHub Issues](https://github.com/WeiChia/GemoteWeb/issues) 进行反馈。
+**特别说明**：原始项目与本重构项目均采用 **AI 辅助生成**。若您在开发过程中遇到任何问题或 bug，欢迎在 [GitHub Issues](https://github.com/LingFeng4559/GemoteParticleEditorWeb/issues) 进行反馈。
 
 原项目主要用于制作 MythicMobs 的技能特效。我们将视角核心逻辑转向支持 **GEmote** 的 YAML 格式，并加入了专属设定与现代化的多语言界面。您也可以查看 `目录/js/lang` 文件夹来添加或修改自定义的语言配置文件。
 
