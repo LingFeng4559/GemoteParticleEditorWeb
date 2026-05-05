@@ -6,7 +6,7 @@ A professional 3D web-based drawing tool designed specifically for the Minecraft
 
 This project is deeply modified and refactored based on the [MythicMobs Particle Editor](https://github.com/Ninepin123/Ninepin123.github.io) developed by **[Ninepin123](https://github.com/Ninepin123)**.
 
-**Note**: Both the original project and this refactored version were developed with **AI assistance**. If you encounter any bugs during development, please feel free to report them on [GitHub Issues](https://github.com/WeiChia/GemoteWeb/issues).
+**Note**: Both the original project and this refactored version were developed with **AI assistance**. If you encounter any bugs during development, please feel free to report them on [GitHub Issues](https://github.com/LingFeng4559/GemoteParticleEditorWeb/issues).
 
 The original project was primarily used for creating MythicMobs skill effects. We have refactored the core logic to support **GEmote**'s YAML format and added exclusive settings and a modern multi-language interface. You can add or modify custom language configurations in the `js/lang` folder.
 
