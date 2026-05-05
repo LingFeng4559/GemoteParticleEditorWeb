@@ -178,55 +178,36 @@ class App {
     }
 
     handleMouseDown(event) {
-        // 預覽進行中時，任何繪製/編輯動作都先停止預覽
-        if (this.animationPreview.isRunning()) {
-            this.animationPreview.stop();
-        }
-
-        // 右鍵 (2) 用於旋轉視角，中鍵 (1) 用於縮放，均不觸發繪製
-        if (event.button === 1 || event.button === 2) {
-            this.sceneManager.controls.enabled = true;
-            return;
-        }
+        if (this.animationPreview.isRunning()) this.animationPreview.stop();
 
         const state = this.stateManager.getState();
-        // 如果是相機模式，始終啟用控制（由 OrbitControls 處理左鍵平移、右鍵旋轉）
-        if (state.currentMode === 'camera') {
-            this.sceneManager.controls.enabled = true;
-            return;
-        }
-
         const intersectPoint = this.sceneManager.getIntersectPoint(
             event, state.drawingHeight, state.planeRotation, state.planeOffset, this.isCtrlPressed
         );
 
-        // 如果點擊在平台內，且是繪圖工具，則停用相機控制進行繪圖
-        if (intersectPoint !== null) {
-            this.sceneManager.controls.enabled = false;
+        // 如果點擊在平台上且不是相機模式，進行繪圖並鎖定視角
+        if (state.currentMode !== 'camera' && intersectPoint !== null) {
+            this.sceneManager.setControlsEnabled(false);
+            this.stateManager.setDrawing(true);
+            this._executeDrawingAction(event, intersectPoint, state);
         } else {
-            // 點擊在平台外，啟用控制以進行平移 (左鍵) 或旋轉 (右鍵)
-            this.sceneManager.controls.enabled = true;
-            return; // 不進行繪圖邏輯
+            // 在平台外或相機模式下，啟用控制器以使用右鍵旋轉/左鍵平移
+            this.sceneManager.setControlsEnabled(true);
         }
+    }
 
-        this.stateManager.setDrawing(true);
-
+    _executeDrawingAction(event, intersectPoint, state) {
         if (state.currentMode === 'pivot_pick') {
             this.stateManager.setMirrorPivot({ x: intersectPoint.x, y: intersectPoint.y, z: intersectPoint.z });
             this.stateManager.setMode('point'); 
             this.stateManager.setDrawing(false);
+            this.sceneManager.setControlsEnabled(true);
             return;
         }
 
-        if (!intersectPoint) return;
-
         switch (state.currentMode) {
-            case 'select':
-                this._handleSelectDown(event, intersectPoint, state);
-                break;
-            case 'point':
-                this._handlePointDown(intersectPoint, state);
-                break;
+            case 'select': this._handleSelectDown(event, intersectPoint, state); break;
+            case 'point': this._handlePointDown(intersectPoint, state); break;
             case 'brush':
                 this.brushTool.startStroke(intersectPoint, state);
                 this.stateManager.setLastPointPosition(intersectPoint);
@@ -245,6 +226,14 @@ class App {
     handleMouseMove(event) {
         this.lastMouseMoveEvent = event;
         const state = this.stateManager.getState();
+        
+        // 若正在繪圖，完全阻斷滑鼠事件傳播，避免視角移動
+        if (state.isDrawing) {
+            event.preventDefault();
+            event.stopPropagation();
+            this.sceneManager.controls.enabled = false;
+        }
+
         const intersectPoint = this.sceneManager.getIntersectPoint(
             event, state.drawingHeight, state.planeRotation, state.planeOffset, this.isCtrlPressed
         );
@@ -311,7 +300,9 @@ class App {
 
     handleMouseUp(event) {
         const state = this.stateManager.getState();
-        this.sceneManager.controls.enabled = true;
+        
+        // 總是在 MouseUp 時恢復相機控制
+        this.sceneManager.setControlsEnabled(true);
 
         // 完成框選
         if (this.selectionManager.isMarqueeActive) {

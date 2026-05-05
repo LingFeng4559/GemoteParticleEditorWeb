@@ -56,8 +56,8 @@ class BrushTool {
 
         const lastPos = new THREE.Vector3(lastPointPosition.x, lastPointPosition.y, lastPointPosition.z);
         
-        // 筆刷間距也應受密度影響。基準設為 0.6 以配合 3x 修正。
-        const minDistance = 0.6 / (state.particleDensity || 1.0);
+        // 筆刷間距與形狀工具對齊，基準設為 0.5。
+        const minDistance = 0.5 / (state.particleDensity || 1.0);
         if (intersectPoint.distanceTo(lastPos) <= minDistance) return null;
 
         const basePoint = {

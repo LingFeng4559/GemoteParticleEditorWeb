@@ -67,8 +67,9 @@ class ShapeTool {
         const startLocal = worldToPlane(this.startPoint);
         const endLocal = worldToPlane(endPoint);
         const particles = [];
-        // 校正：原本 0.6 仍導致密度是預覽的 3 倍。調整為 1.8 以達成 1:1 對應。
-        const spacing = 1.8 / (state.particleDensity || 1.0);
+        // 將基準間距調整為 0.5。這樣在 density = 1.0 時，間距為 0.5，比原本的 1.8 更密集。
+        // 這能確保圖形邊緣與填充更飽滿，同時滿足 UI 預覽的 1.0 基準。
+        const spacing = 0.5 / (state.particleDensity || 1.0);
 
         const addLocalPart = (lx, lz) => {
             const wp = planeToWorld(new THREE.Vector3(lx, 0, lz));

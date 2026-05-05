@@ -32,7 +32,7 @@ class ThreeScene {
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = false;
         this.controls.mouseButtons = {
-            LEFT: THREE.MOUSE.PAN, 
+            LEFT: THREE.MOUSE.PAN,
             MIDDLE: THREE.MOUSE.DOLLY,
             RIGHT: THREE.MOUSE.ROTATE
         };
@@ -292,6 +292,12 @@ class ThreeScene {
         this.scene.remove(this.gridHelper);
         this.gridHelper = new THREE.GridHelper(size, size, 0x444444, 0x222222);
         this.scene.add(this.gridHelper);
+    }
+
+    setControlsEnabled(enabled) {
+        if (this.controls) {
+            this.controls.enabled = enabled;
+        }
     }
 
     getDrawingPlaneInfo() {
