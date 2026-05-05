@@ -17,7 +17,7 @@ Please select your language to view the detailed documentation:
 ---
 
 ## 🚀 快速開始 (Quick Start)
-直接使用網站
+免安裝直接使用
 **Live Demo (網站佈署)**: [https://lingfeng4559.github.io/GemoteParticleEditorWeb/](https://lingfeng4559.github.io/GemoteParticleEditorWeb/)
 
 ### Windows
