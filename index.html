@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="title">Gemote 粒子特效 3D 繪圖器</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.165.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.165.0/examples/jsm/" } }</script>
+</head>
+<body>
+    <canvas id="scene-canvas"></canvas>
+
+    <div id="help-panel" class="floating-panel">
+        <div class="help-header"><span data-i18n="help_title">操作說明</span><button id="help-close-btn">✕</button></div>
+        <div class="help-content">
+            <div class="help-item"><span class="shortcut">Ctrl</span><span data-i18n="help_ctrl">精細調整模式 (±0.1)</span></div>
+            <div class="help-item"><span class="shortcut">Ctrl + Z</span><span data-i18n="help_undo">返回上一步 (Undo)</span></div>
+            <div class="help-item"><span class="shortcut">Right Click</span><span data-i18n="help_rotate">旋轉視角</span></div>
+            <div class="help-item"><span class="shortcut">Middle Click</span><span data-i18n="help_pan">平移視角 / 縮放</span></div>
+        </div>
+    </div>
+
+    <button id="panel-open-btn" class="panel-toggle-btn" data-i18n-title="show_panel">☰</button>
+
+    <div id="ui-panel">
+        <div id="panel-header">
+            <h2 data-i18n="panel_title">控制面板</h2>
+            <div class="header-actions">
+                <select id="language-select">
+                    <option value="zh_tw">繁體中文</option>
+                    <option value="zh_cn">简体中文</option>
+                    <option value="en">English</option>
+                </select>
+                <button id="panel-close-btn" class="panel-close-btn" data-i18n-title="hide_panel">✕</button>
+            </div>
+        </div>
+
+        <!-- 1. 參考人物模型 (Steve) -->
+        <div class="section" data-section="reference-character">
+            <h3 class="section-title"><span data-i18n="reference_character">參考人物模型 (Steve)</span> <span class="collapse-arrow">▾</span></h3>
+            <div class="section-content">
+                <div class="control-group">
+                    <div class="mode-switcher">
+                        <button id="btn-ref-solid" class="mode-btn active" data-i18n="char_opaque">100% 模式</button>
+                        <button id="btn-ref-ghost" class="mode-btn" data-i18n="char_ghost">幽靈模式</button>
+                        <button id="btn-ref-hidden" class="mode-btn" data-i18n="char_hidden">不顯示</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. 繪圖工具 -->
+        <div class="section" data-section="drawing-tools">
+            <h3 class="section-title"><span data-i18n="drawing_tools">繪圖工具</span> <span class="collapse-arrow">▾</span></h3>
+            <div class="section-content">
+                <div class="control-group">
+                    <label data-i18n="operation_mode">操作模式:</label>
+                    <div class="mode-switcher mode-main-row">
+                        <button id="btn-mode-camera" class="mode-btn active" data-i18n="mode_camera">相機</button>
+                        <button id="btn-mode-select" class="mode-btn" data-i18n="mode_select">選擇</button>
+                        <button id="btn-mode-point" class="mode-btn" data-i18n="mode_point">點</button>
+                    </div>
+                    <div class="mode-switcher mode-main-row" style="margin-top: 4px;">
+                        <button id="btn-mode-brush" class="mode-btn" data-i18n="mode_brush">筆刷</button>
+                        <button id="btn-mode-eraser" class="mode-btn" data-i18n="mode_eraser">橡皮擦</button>
+                    </div>
+                </div>
+
+                <!-- 形狀工具 (含密度設定) -->
+                <div class="control-group">
+                    <label data-i18n="shape_tools">形狀工具:</label>
+                    <div class="mode-switcher"><button id="btn-mode-rectangle" class="mode-btn" data-i18n="shape_rectangle">方塊</button><button id="btn-mode-circle" class="mode-btn" data-i18n="shape_circle">圓形</button></div>
+                </div>
+                <div class="control-group" id="shape-fill-mode-group" style="display: none;">
+                    <label data-i18n="fill_mode">填充模式:</label>
+                    <div class="mode-switcher"><button id="btn-shape-fill-filled" class="mode-btn active" data-i18n="fill_filled">實心</button><button id="btn-shape-fill-outline" class="mode-btn" data-i18n="fill_outline">空心</button></div>
+                </div>
+                <div class="control-group" style="margin-top: 8px;">
+                    <label data-i18n="particle_density">粒子密度:</label>
+                    <div class="slider-group"><input type="range" id="particle-density" min="0.1" max="5" step="0.05" value="1"><span id="density-display" class="slider-display">1.00</span></div>
+                    <div class="density-preview-container" style="margin-top: 10px;">
+                        <canvas id="density-preview-canvas" width="80" height="80"></canvas>
+                        <div class="density-hint" data-i18n="density_hint">密度數值與實際效果為 1:1 對應</div>
+                    </div>
+                </div>
+
+                <div class="control-group" id="eraser-mode-group" style="display: none;">
+                    <label data-i18n="eraser_mode">橡皮擦模式:</label>
+                    <div class="mode-switcher"><button id="btn-eraser-mode-point" class="mode-btn active" data-i18n="erase_point">擦除點</button><button id="btn-eraser-mode-group" class="mode-btn" data-i18n="erase_group">擦除群組</button></div>
+                </div>
+                
+                <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 12px 0; padding-top: 12px;">
+                    <div class="control-group">
+                        <label data-i18n="drawing_height">繪畫平台高度:</label>
+                        <div class="slider-group"><input type="range" id="drawing-height" min="0" max="10" step="0.1" value="0"><span id="height-display" class="slider-display">0.0</span></div>
+                    </div>
+                    <div class="control-group">
+                        <label data-i18n="tilt_vertical">上下旋轉角度:</label>
+                        <div class="slider-group"><input type="range" id="plane-rotation-x" min="-180" max="180" step="1" value="0"><span id="rotation-x-display" class="slider-display">0°</span></div>
+                    </div>
+                    <div class="control-group">
+                        <label data-i18n="tilt_horizontal">左右旋轉角度:</label>
+                        <div class="slider-group"><input type="range" id="plane-rotation-z" min="-180" max="180" step="1" value="0"><span id="rotation-z-display" class="slider-display">0°</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. 粒子設定 -->
+        <div class="section" data-section="particle-settings">
+            <h3 class="section-title"><span data-i18n="particle_settings">粒子設定</span> <span class="collapse-arrow">▾</span></h3>
+            <div class="section-content">
+                <div class="control-group"><label for="particle-type" data-i18n="particle_type">粒子類型:</label><select id="particle-type"></select></div>
+                <div id="particle-color-group" style="display: none;">
+                    <label data-i18n="particle_color">粒子顏色:</label>
+                    <div class="advanced-color-picker">
+                        <div class="color-row-top">
+                            <input type="color" id="particle-color" value="#ff0000">
+                            <div class="rgb-inputs">
+                                <div class="rgb-field"><span>R</span><input type="number" id="rgb-r" min="0" max="255" value="255"></div>
+                                <div class="rgb-field"><span>G</span><input type="number" id="rgb-g" min="0" max="255" value="0"></div>
+                                <div class="rgb-field"><span>B</span><input type="number" id="rgb-b" min="0" max="255" value="0"></div>
+                            </div>
+                        </div>
+                        <div class="brightness-control"><label data-i18n="brightness">亮度:</label><input type="range" id="color-brightness" min="0" max="100" value="100"></div>
+                    </div>
+                </div>
+                <div class="control-group" style="margin-top: 12px;">
+                    <label><input type="checkbox" id="animation-enabled"> <span data-i18n="animation_enabled">新筆畫加入動畫</span></label>
+                    <div id="animation-tick-group" style="display: none; margin-top: 6px;">
+                        <label data-i18n="particle_delay">延遲 (Delay):</label>
+                        <div class="input-group"><input type="number" id="animation-tick-interval" min="0" max="30" step="1" value="1"></div>
+                        <div class="button-grid" style="margin-top: 8px;"><button id="btn-animation-preview" class="secondary-btn" data-i18n="preview_animation">預覽動畫</button><button id="btn-toggle-group-animation" class="secondary-btn" disabled data-i18n="toggle_group_animation">群組切換</button></div>
+                        <div id="selected-group-status" style="font-size: 10px; opacity: 0.6; margin-top: 4px;" data-i18n="no_group_selected">未選中群組</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. 鏡像工具 -->
+        <div class="section" data-section="mirror-tools">
+            <h3 class="section-title"><span data-i18n="mirror_settings">鏡像與對稱工具</span> <span class="collapse-arrow">▾</span></h3>
+            <div class="section-content">
+                <div class="control-group">
+                    <div class="mirror-toggles">
+                        <label class="toggle-container"><input type="checkbox" id="mirror-horizontal-x"> <span data-i18n="mirror_horizontal_x">X 軸鏡像</span></label>
+                        <label class="toggle-container"><input type="checkbox" id="mirror-horizontal-z"> <span data-i18n="mirror_horizontal_z">Z 軸鏡像</span></label>
+                        <label class="toggle-container"><input type="checkbox" id="mirror-vertical"> <span data-i18n="mirror_vertical">Y 軸鏡像</span></label>
+                    </div>
+                    <div class="pivot-controls" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05);">
+                        <label data-i18n="mirror_pivot">鏡像中心 (Pivot):</label>
+                        <div style="margin-bottom: 4px;">
+                            <label class="toggle-container"><input type="checkbox" id="pivot-follow-plane" checked> <span data-i18n="pivot_follow" style="font-size: 10px; color: var(--text-muted-color);">跟隨平台中心</span></label>
+                        </div>
+                        <div class="pivot-inputs">
+                            <div class="pivot-field"><span>X</span><input type="number" id="pivot-x" step="0.1" value="0"></div>
+                            <div class="pivot-field"><span>Y</span><input type="number" id="pivot-y" step="0.1" value="0"></div>
+                            <div class="pivot-field"><span>Z</span><input type="number" id="pivot-z" step="0.1" value="0"></div>
+                        </div>
+                        <div class="button-grid" style="margin-top: 4px;">
+                            <button id="btn-pivot-center" class="mini-btn" data-i18n="pivot_center">平台中心</button>
+                            <button id="btn-pivot-pick" class="mini-btn" data-i18n="pivot_pick">場景選取</button>
+                        </div>
+                    </div>
+                    <div class="radial-symmetry-controls" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05);">
+                        <label class="toggle-container"><input type="checkbox" id="radial-symmetry-enabled"> <span data-i18n="radial_symmetry">放射鏡像</span></label>
+                        <div id="radial-settings" style="display: none; margin-top: 4px;">
+                            <div class="control-row">
+                                <label data-i18n="radial_axis">軸向向:</label>
+                                <select id="radial-axis"><option value="X">X</option><option value="Y" selected>Y</option><option value="Z">Z</option></select>
+                            </div>
+                            <div class="control-row">
+                                <label data-i18n="radial_mode">模式:</label>
+                                <select id="radial-mode"><option value="equal" selected data-i18n="radial_equal">均分</option><option value="fixed" data-i18n="radial_fixed">固定間隔</option></select>
+                            </div>
+                            <div class="control-row">
+                                <label data-i18n="radial_count">數量:</label>
+                                <input type="number" id="radial-count" min="2" max="16" value="4">
+                            </div>
+                            <div class="control-row">
+                                <label data-i18n="radial_offset">偏移/間距:</label>
+                                <input type="number" id="radial-offset" value="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. 操作與輸出 -->
+        <div class="section collapsed" data-section="actions-output">
+            <h3 class="section-title"><span data-i18n="actions_output">操作與輸出</span> <span class="collapse-arrow">▸</span></h3>
+            <div class="section-content">
+                <div class="button-grid"><button id="btn-undo" class="secondary-btn" data-i18n="undo">上一步</button><button id="btn-clear" class="secondary-btn" data-i18n="clear_canvas">清除畫布</button></div>
+                <div class="button-grid" style="margin-top: 8px;"><button id="btn-generate" class="primary-btn" data-i18n="generate_code">生成程式碼</button><button id="btn-copy-code" class="secondary-btn" data-i18n="copy_code">複製</button></div>
+                <textarea id="code-output" rows="5" readonly style="margin-top: 8px;" data-i18n-placeholder="code_placeholder"></textarea>
+            </div>
+        </div>
+
+        <!-- 6. 專案管理 -->
+        <div class="section collapsed" data-section="project-management">
+            <h3 class="section-title"><span data-i18n="project_management">專案管理</span> <span class="collapse-arrow">▸</span></h3>
+            <div class="section-content">
+                <div class="control-group"><label data-i18n="project_name">專案名稱:</label><input type="text" id="project-name" value="未命名專案"></div>
+                <div class="control-group"><label data-i18n="skill_id">特效 ID:</label><input type="text" id="skill-id" value="MyGemoteEmote"></div>
+                <div class="button-grid">
+                    <button id="btn-save-project" class="secondary-btn" data-i18n="save_project">儲存</button>
+                    <button id="btn-load-project" class="secondary-btn" data-i18n="load_project">載入</button>
+                </div>
+                <button id="btn-new-project" class="primary-btn" style="margin-top: 8px;" data-i18n="new_project">建立新專案</button>
+                <div id="current-project-display" style="margin-top: 8px; font-size: 11px; opacity: 0.6; text-align: center;">未命名專案</div>
+            </div>
+        </div>
+
+        <!-- 隱藏的標籤與滑桿，維持系統運作但簡化 UI -->
+        <div style="display:none;">
+            <input type="range" id="grid-size" value="10">
+            <input type="range" id="camera-sensitivity" value="1.0">
+            <input type="range" id="plane-offset-x" value="0">
+            <input type="range" id="plane-offset-z" value="0">
+            <input type="range" id="plane-rotation-y" value="0">
+            <span id="grid-size-display">10</span>
+            <span id="sensitivity-display">1.0</span>
+            <span id="offset-x-display">0</span>
+            <span id="offset-z-display">0</span>
+            <span id="rotation-y-display">0°</span>
+        </div>
+    </div>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>
