@@ -7,6 +7,9 @@ class CodeGenerator {
         this.stateManager = stateManager;
         this.codeOutput = codeOutput;
         this.copyCodeBtn = copyCodeBtn;
+        this.qualitySelect = document.querySelector('#export-quality');
+        this.commandLimitInput = document.querySelector('#export-command-limit');
+        this.estimateOutput = document.querySelector('#export-estimate');
     }
 
     generate() {
@@ -32,8 +35,9 @@ class CodeGenerator {
         lines.push('');
         lines.push('pattern:');
 
-        const baked = bakeParticleEvents(state);
-        if (baked.limited) lines.push(`  #@gemote-bake ${JSON.stringify({ step: baked.bakeStep, idealCommands: baked.idealCommands, limit: 12000 })}`);
+        const limit = this.getCommandLimit();
+        const baked = bakeParticleEvents(state, { maxCommands: limit });
+        lines.push(`  #@gemote-bake ${JSON.stringify({ step: baked.bakeStep, idealCommands: baked.idealCommands, commands: baked.estimatedCommands, limit })}`);
         let lastTick = 0;
         baked.events.forEach((event, index) => {
             const tick = Math.round(event.tick);
@@ -45,7 +49,30 @@ class CodeGenerator {
 
         const result = lines.join('\n');
         this.codeOutput.value = result;
+        this.renderEstimate(baked, limit);
         return result;
+    }
+
+    getCommandLimit() {
+        const selected = this.qualitySelect?.value;
+        const value = selected === 'custom' ? Number(this.commandLimitInput?.value) : Number(selected);
+        return Math.max(100, Math.min(200000, Number.isFinite(value) ? value : 12000));
+    }
+
+    estimate() {
+        const limit = this.getCommandLimit();
+        const baked = bakeParticleEvents(this.stateManager.getState(), { maxCommands: limit });
+        this.renderEstimate(baked, limit);
+        return baked;
+    }
+
+    renderEstimate(baked, limit) {
+        if (!this.estimateOutput) return;
+        const size = baked.estimatedBytes < 1048576
+            ? `${(baked.estimatedBytes / 1024).toFixed(1)} KB`
+            : `${(baked.estimatedBytes / 1048576).toFixed(2)} MB`;
+        this.estimateOutput.textContent = `${baked.estimatedCommands.toLocaleString()} 指令｜約 ${size}｜取樣 ${baked.bakeStep} tick${baked.limited ? `｜原始 ${baked.idealCommands.toLocaleString()}，已依 ${limit.toLocaleString()} 上限降採樣` : ''}`;
+        this.estimateOutput.dataset.status = baked.limited ? 'warning' : 'success';
     }
 
     generateAndDownload() {

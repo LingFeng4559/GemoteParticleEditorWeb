@@ -7,8 +7,14 @@ export function bakeParticleEvents(state, { maxCommands = 12000 } = {}) {
     );
     const duration = Math.max(1, Math.round(Number(state.timelineDuration) || 80));
     const animatedLayers = layers.filter(layer => layer.modifiers?.some(modifier => modifier.enabled !== false) || layer.tracks?.some(track => track.enabled !== false));
-    const idealCommands = animatedLayers.reduce((sum, layer) => sum + layer.particles.length * (duration + 1), 0);
-    const bakeStep = Math.max(1, Math.ceil(idealCommands / Math.max(1, maxCommands)));
+    const animatedIds = new Set(animatedLayers.map(layer => layer.id));
+    const staticCommands = (state.particlePoints || []).length + layers
+        .filter(layer => !animatedIds.has(layer.id))
+        .reduce((sum, layer) => sum + layer.particles.length, 0);
+    const animatedIdealCommands = animatedLayers.reduce((sum, layer) => sum + layer.particles.length * (duration + 1), 0);
+    const idealCommands = staticCommands + animatedIdealCommands;
+    const availableAnimatedBudget = Math.max(1, maxCommands - staticCommands);
+    const bakeStep = Math.max(1, Math.ceil(animatedIdealCommands / availableAnimatedBudget));
     const events = (state.particlePoints || []).map(point => ({ tick: 0, point, layerId: null }));
 
     for (const layer of layers) {
@@ -28,5 +34,9 @@ export function bakeParticleEvents(state, { maxCommands = 12000 } = {}) {
         }
     }
     events.sort((a, b) => a.tick - b.tick);
-    return { events, bakeStep, idealCommands, limited: idealCommands > maxCommands };
+    return {
+        events, bakeStep, idealCommands, limited: idealCommands > maxCommands,
+        estimatedCommands: events.length,
+        estimatedBytes: events.length * 155
+    };
 }

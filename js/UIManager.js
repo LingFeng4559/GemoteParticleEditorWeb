@@ -90,6 +90,9 @@ class UIManager {
         this.clearBtn = q('#btn-clear');
         this.undoBtn = q('#btn-undo');
         this.codeOutput = q('#code-output');
+        this.exportQualitySelect = q('#export-quality');
+        this.exportCommandLimitInput = q('#export-command-limit');
+        this.estimateExportBtn = q('#btn-estimate-export');
 
         this.modeButtons = {
             camera: q('#btn-mode-camera'),
@@ -193,6 +196,12 @@ class UIManager {
 
         safeAdd(this.generateBtn, 'click', () => this.codeGenerator.generateAndDownload());
         safeAdd(this.copyCodeBtn, 'click', () => this.codeGenerator.generateAndCopy());
+        safeAdd(this.estimateExportBtn, 'click', () => this.codeGenerator.estimate());
+        safeAdd(this.exportQualitySelect, 'change', event => {
+            if (event.target.value !== 'custom') this.exportCommandLimitInput.value = event.target.value;
+            this.exportCommandLimitInput.disabled = event.target.value !== 'custom';
+            this.codeGenerator.estimate();
+        });
         safeAdd(this.clearBtn, 'click', () => this.requestClear());
         safeAdd(this.undoBtn, 'click', () => this.stateManager.undoLastPoint());
 

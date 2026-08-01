@@ -935,3 +935,4 @@ input[type="range"]:hover::-webkit-slider-thumb { background-color: var(--primar
 }
 .layer-row.dragging { opacity: .45; }
 .layer-row.drag-over { outline: 1px dashed #38bdf8; background: rgba(56, 189, 248, .12); }
+.asset-library{margin-top:8px;border-top:1px solid #334155;padding-top:8px}.asset-toolbar{display:flex;gap:6px;align-items:center}.asset-toolbar input{min-width:0;flex:1}.asset-summary{font-size:10px;color:#94a3b8;margin:5px 0}.asset-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;max-height:220px;overflow:auto}.asset-card{display:grid;grid-template-rows:72px auto auto;min-width:0;padding:4px;background:#111827;border:1px solid #334155;border-radius:6px;color:#e2e8f0}.asset-card:hover{border-color:#38bdf8}.asset-card img{width:100%;height:72px;object-fit:contain;image-rendering:pixelated}.asset-card span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}.asset-card small{color:#64748b}

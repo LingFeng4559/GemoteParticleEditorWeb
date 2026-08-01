@@ -1,9 +1,11 @@
 import { convertImageDataToParticles } from './ImageParticleConverter.js';
+import AssetLibraryPanel from './AssetLibraryPanel.js';
 
 class ImageImportController {
     constructor(stateManager, elements) {
         this.stateManager = stateManager;
         this.elements = elements;
+        this.assetLibrary = new AssetLibraryPanel(elements.status, file => this.importFiles([file], { storeAssets: false }));
         this.setupEvents();
     }
 
@@ -53,7 +55,7 @@ class ImageImportController {
         }
     }
 
-    async importFiles(fileList) {
+    async importFiles(fileList, { storeAssets = true } = {}) {
         const files = Array.from(fileList || []).filter(file => file.type.startsWith('image/'));
         if (files.length === 0) {
             this.setStatus('沒有找到可讀取的圖片。', 'error');
@@ -65,6 +67,10 @@ class ImageImportController {
         let particleCount = 0;
         const errors = [];
         this.setStatus(`正在轉換 ${files.length} 張圖片…`);
+        if (storeAssets) {
+            try { await this.assetLibrary.addFiles(files); }
+            catch (error) { errors.push(`素材庫：${error.message}`); }
+        }
 
         for (const file of files) {
             try {
@@ -115,4 +121,3 @@ class ImageImportController {
 }
 
 export default ImageImportController;
-
