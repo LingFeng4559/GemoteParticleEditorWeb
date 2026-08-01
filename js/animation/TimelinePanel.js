@@ -25,6 +25,7 @@ class TimelinePanel {
                 <input data-role="tick" type="number" min="0" value="0"><span>tick</span>
                 <label>總長 <input data-role="duration" type="number" min="1" value="80"></label>
             </div>
+            <div class="timeline-tracks" data-role="tracks" aria-label="關鍵影格軌道"></div>
             <div class="timeline-editor" data-role="editor">
                 <fieldset><legend>Transform</legend>
                     <label>位置 X <input data-transform="position.x" type="number" step="0.1"></label>
@@ -85,7 +86,7 @@ class TimelinePanel {
             const mobileExpanded = window.matchMedia('(max-width: 720px)').matches && !this.root.classList.contains('is-collapsed');
             document.body.classList.toggle('timeline-expanded-mobile', mobileExpanded);
         };
-        if (window.matchMedia('(max-width: 720px)').matches) {
+        if (window.matchMedia('(max-width: 720px)').matches || document.body.dataset.workspace !== 'animate') {
             this.root.classList.add('is-collapsed');
             collapseButton.textContent = '⌃';
             collapseButton.title = '展開時間軸';
@@ -233,6 +234,7 @@ class TimelinePanel {
         this.root.querySelector('[data-role="tick"]').value = Math.round(state.timelineTick * 10) / 10;
         this.root.querySelector('[data-role="duration"]').value = state.timelineDuration;
         this.root.querySelector('[data-action="play"]').textContent = state.timelinePlaying ? '❚❚' : '▶';
+        this.renderTracks(layer, state);
         if (!layer) return;
         const transform = normalizeTransform(layer.transform);
         this.root.querySelectorAll('[data-transform]').forEach(input => {
@@ -263,6 +265,40 @@ class TimelinePanel {
         setOrbit('enabled', orbit?.enabled); setOrbit('axis', orbit?.axis || 'Y'); setOrbit('radius', orbit?.radius ?? 1);
         setOrbit('from', orbit?.from ?? 0); setOrbit('to', orbit?.to ?? 360); setOrbit('startTick', orbit?.startTick ?? 0);
         setOrbit('duration', orbit?.duration ?? state.timelineDuration); setOrbit('facePath', orbit?.facePath);
+    }
+
+    renderTracks(layer, state) {
+        const root = this.root.querySelector('[data-role="tracks"]');
+        if (!layer) {
+            root.innerHTML = '<div class="track-empty">從 Hierarchy 選取圖層，即可查看關鍵影格與修改器作用區間</div>';
+            return;
+        }
+        const duration = Math.max(1, Number(state.timelineDuration) || 80);
+        const tracks = (layer.tracks || []).filter(track => track.enabled !== false && track.keyframes?.length);
+        const modifiers = (layer.modifiers || []).filter(modifier => modifier.enabled !== false);
+        const rows = tracks.slice(0, 4).map(track => ({
+            label: track.property || track.path || 'Property',
+            keys: track.keyframes.map(key => Number(key.tick) || 0)
+        }));
+        modifiers.slice(0, Math.max(0, 4 - rows.length)).forEach(modifier => rows.push({
+            label: `${modifier.type || 'Modifier'} · 作用區間`,
+            range: [Number(modifier.startTick) || 0, (Number(modifier.startTick) || 0) + (Number(modifier.duration) || duration)]
+        }));
+        if (!rows.length) rows.push({ label: layer.name, keys: [] });
+        root.innerHTML = rows.map(row => `
+            <div class="track-row">
+                <span class="track-label">${this.escapeHtml(row.label)}</span>
+                <div class="track-lane">
+                    ${row.range ? `<span class="modifier-range" style="left:${Math.max(0, row.range[0] / duration * 100)}%;width:${Math.max(1, Math.min(duration, row.range[1]) - row.range[0]) / duration * 100}%"></span>` : ''}
+                    ${(row.keys || []).map(tick => `<button type="button" class="key-diamond" data-tick="${tick}" style="left:${Math.max(0, Math.min(100, tick / duration * 100))}%" title="Tick ${tick}"></button>`).join('')}
+                    <span class="playhead" style="left:${Math.max(0, Math.min(100, (Number(state.timelineTick) || 0) / duration * 100))}%"></span>
+                </div>
+            </div>`).join('');
+        root.querySelectorAll('[data-tick]').forEach(button => button.addEventListener('click', () => this.stateManager.setTimelineTick(button.dataset.tick)));
+    }
+
+    escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
     }
 
     animate(time) {

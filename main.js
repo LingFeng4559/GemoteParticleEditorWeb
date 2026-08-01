@@ -17,6 +17,7 @@ import MirrorManager from './js/MirrorManager.js';
 import { reflectParticles } from './js/ReflectionUtil.js';
 import TimelinePanel from './js/animation/TimelinePanel.js';
 import TransformGizmoController from './js/TransformGizmoController.js';
+import WorkspaceShell from './js/WorkspaceShell.js';
 
 class App {
     constructor() {
@@ -26,6 +27,7 @@ class App {
 
         this.stateManager = new StateManager();
         this.sceneManager = new ThreeScene(this.canvas);
+        this.workspaceShell = new WorkspaceShell(this.stateManager);
         this.uiManager = new UIManager(this.stateManager);
         this.projectManager = new ProjectManager(this.stateManager);
         this.localStorageManager = new LocalStorageManager(this.stateManager);
