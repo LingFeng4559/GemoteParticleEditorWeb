@@ -20,6 +20,8 @@ class ImageImportController {
         this.elements.folderInput?.addEventListener('change', event => this.prepareFiles(event.target.files));
         this.elements.confirmButton?.addEventListener('click', () => this.confirmConversion());
         this.elements.cancelButton?.addEventListener('click', () => this.cancelPlacement());
+        this.elements.scaleDownButton?.addEventListener('click', () => this.adjustPreviewSize(1 / 1.15));
+        this.elements.scaleUpButton?.addEventListener('click', () => this.adjustPreviewSize(1.15));
         [this.elements.worldWidth, this.elements.positionX, this.elements.positionY]
             .forEach(element => element?.addEventListener('input', () => this.updatePreviewTransform()));
         const canvas = this.sceneManager.canvas;
@@ -42,6 +44,12 @@ class ImageImportController {
             event.stopImmediatePropagation();
             this.isPlacing = false;
         }, { capture: true });
+        canvas?.addEventListener('wheel', event => {
+            if (!this.previewMesh) return;
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            this.adjustPreviewSize(event.deltaY < 0 ? 1.1 : 1 / 1.1);
+        }, { capture: true, passive: false });
     }
 
     getOptions(imageData) {
@@ -54,9 +62,9 @@ class ImageImportController {
             sampleStep,
             spacing: worldWidth / Math.max(1, sampledWidth - 1),
             plane: 'XY',
-            colorMode: this.elements.colorMode?.value || 'source',
+            colorMode: this.elements.colorMode?.value || 'single',
             singleColor: state.particleColor,
-            particleType: (this.elements.colorMode?.value || 'source') === 'source' ? 'redstone' : state.particleType
+            particleType: (this.elements.colorMode?.value || 'single') === 'source' ? 'redstone' : state.particleType
         };
     }
 
@@ -145,7 +153,7 @@ class ImageImportController {
         this.elements.placement.hidden = false;
         this.elements.positionX.value = '0';
         this.elements.positionY.value = '0';
-        this.setStatus('步驟 2：在 3D 視窗拖曳圖片，並調整圖片寬度。');
+        this.setStatus('步驟 2：在 3D 視窗選擇 XZ 位置；滾輪可縮放圖片。');
         await this.createPreviewMesh();
     }
 
@@ -180,6 +188,13 @@ class ImageImportController {
         this.previewMesh.position.copy(
             planeToWorld(new THREE.Vector3(horizontal, 0, vertical)).add(normal.clone().multiplyScalar(0.025))
         );
+    }
+
+    adjustPreviewSize(factor) {
+        const current = Math.max(0.1, Number(this.elements.worldWidth?.value) || 4);
+        const next = Math.max(0.1, Math.min(100, current * factor));
+        this.elements.worldWidth.value = String(Math.round(next * 100) / 100);
+        this.updatePreviewTransform();
     }
 
     updatePositionFromPointer(event) {

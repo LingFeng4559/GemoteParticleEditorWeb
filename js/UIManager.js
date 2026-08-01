@@ -69,6 +69,8 @@ class UIManager {
             placementName: q('#image-placement-name'),
             positionX: q('#image-position-x'),
             positionY: q('#image-position-y'),
+            scaleDownButton: q('#btn-image-scale-down'),
+            scaleUpButton: q('#btn-image-scale-up'),
             confirmButton: q('#btn-confirm-image-conversion'),
             cancelButton: q('#btn-cancel-image-placement')
         };
