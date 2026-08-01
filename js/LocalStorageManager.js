@@ -63,10 +63,26 @@ class LocalStorageManager {
                     const out = {
                         id: g.id,
                         type: g.type,
+                        layerKind: g.layerKind,
+                        name: g.name,
+                        parentId: g.parentId,
+                        visible: g.visible,
+                        exportEnabled: g.exportEnabled,
+                        locked: g.locked,
+                        solo: g.solo,
+                        expanded: g.expanded,
+                        order: g.order,
+                        layerColor: g.layerColor,
                         particles: g.particles || [],
                         isAnimated: !!g.isAnimated,
                         bounds: g.bounds,
-                        position: g.position
+                        position: g.position,
+                        source: g.source,
+                        imageSettings: g.imageSettings,
+                        transform: g.transform,
+                        timing: g.timing,
+                        tracks: g.tracks,
+                        modifiers: g.modifiers
                     };
                     if (g.tickInterval !== undefined && g.tickInterval !== null) {
                         out.tickInterval = g.tickInterval;
@@ -83,6 +99,9 @@ class LocalStorageManager {
                     gridSize: state.gridSize,
                     animationEnabled: state.animationEnabled,
                     animationTickInterval: state.animationTickInterval,
+                    timelineDuration: state.timelineDuration,
+                    loop: state.loop,
+                    head: state.head,
                     horizontalMirrorEnabled: !!state.horizontalMirrorEnabled,
                     horizontalMirrorZEnabled: !!state.horizontalMirrorZEnabled,
                     verticalMirrorEnabled: !!state.verticalMirrorEnabled,

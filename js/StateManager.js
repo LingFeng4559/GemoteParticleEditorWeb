@@ -307,10 +307,10 @@ class StateManager {
         this.notify();
     }
 
-    updateLayerAnimation(layerId, updates) {
+    updateLayerAnimation(layerId, updates, { recordHistory = true } = {}) {
         const layer = this.drawingGroups.find(group => group.id === layerId);
         if (!layer) return false;
-        this.captureHistory();
+        if (recordHistory) this.captureHistory();
         for (const key of ['transform', 'timing', 'tracks', 'modifiers']) {
             if (Object.prototype.hasOwnProperty.call(updates, key)) layer[key] = updates[key];
         }

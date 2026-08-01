@@ -16,6 +16,7 @@ import AnimationPreview from './js/AnimationPreview.js';
 import MirrorManager from './js/MirrorManager.js';
 import { reflectParticles } from './js/ReflectionUtil.js';
 import TimelinePanel from './js/animation/TimelinePanel.js';
+import TransformGizmoController from './js/TransformGizmoController.js';
 
 class App {
     constructor() {
@@ -38,6 +39,7 @@ class App {
         this.selectionManager = new SelectionManager(this.sceneManager, this.sceneSync);
         this.animationPreview = new AnimationPreview(this.stateManager, this.sceneSync);
         this.timelinePanel = new TimelinePanel(this.stateManager);
+        this.transformGizmo = new TransformGizmoController(this.stateManager, this.sceneManager);
         this.mirrorManager = new MirrorManager(this.sceneManager);
 
         this.BRUSH_RADIUS = 0.3;
@@ -155,7 +157,7 @@ class App {
         this.sceneManager.updateCharacterMode(state.characterMode);
         
         // 由於左鍵旋轉已禁用，右鍵旋轉與中鍵縮放在任何模式下都不會干擾左鍵繪圖
-        this.sceneManager.controls.enabled = true;
+        this.sceneManager.controls.enabled = !this.transformGizmo?.dragging;
 
         this.cursorManager.updateCursor(state.currentMode);
 
@@ -171,6 +173,7 @@ class App {
             this.selectionManager.selectedGroupId,
             (newId) => { this.selectionManager.selectedGroupId = newId; }
         );
+        this.transformGizmo.sync(state);
 
         // 清空時清理所有預覽
         if (this.sceneSync.isEmpty(state)) {
