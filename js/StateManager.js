@@ -447,6 +447,25 @@ class StateManager {
         return true;
     }
 
+    moveLayer(layerId, targetId, placement = 'before') {
+        const layer = this.drawingGroups.find(item => item.id === layerId);
+        const target = this.drawingGroups.find(item => item.id === targetId);
+        if (!layer || !target || layerId === targetId) return false;
+        if (new Set(getLayerDescendantIds(layerId, this.drawingGroups)).has(targetId)) return false;
+        const targetIsGroup = target.layerKind === 'group' || target.type === 'layer-group';
+        layer.parentId = placement === 'inside' && targetIsGroup ? target.id : target.parentId;
+        const siblings = this.drawingGroups
+            .filter(item => item.id !== layerId && item.parentId === layer.parentId)
+            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        const targetIndex = siblings.findIndex(item => item.id === targetId);
+        siblings.splice(targetIndex < 0 ? siblings.length : targetIndex, 0, layer);
+        siblings.forEach((item, index) => { item.order = index; });
+        this.drawingGroups = normalizeLayers(this.drawingGroups);
+        this.setUnsavedChanges(true);
+        this.notify();
+        return true;
+    }
+
     removeGroup(groupId) {
         const index = this.drawingGroups.findIndex(g => g.id === groupId);
         if (index !== -1) {

@@ -933,3 +933,5 @@ input[type="range"]:hover::-webkit-slider-thumb { background-color: var(--primar
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+.layer-row.dragging { opacity: .45; }
+.layer-row.drag-over { outline: 1px dashed #38bdf8; background: rgba(56, 189, 248, .12); }

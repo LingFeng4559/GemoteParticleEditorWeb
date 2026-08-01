@@ -50,6 +50,26 @@ class LayerPanel {
         const row = document.createElement('div');
         row.className = `layer-row${selectedId === layer.id ? ' selected' : ''}`;
         row.style.setProperty('--layer-depth', depth);
+        row.draggable = true;
+        row.dataset.layerId = layer.id;
+        row.addEventListener('dragstart', event => {
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', layer.id);
+            row.classList.add('dragging');
+        });
+        row.addEventListener('dragend', () => row.classList.remove('dragging'));
+        row.addEventListener('dragover', event => {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            row.classList.add('drag-over');
+        });
+        row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
+        row.addEventListener('drop', event => {
+            event.preventDefault();
+            row.classList.remove('drag-over');
+            const sourceId = event.dataTransfer.getData('text/plain');
+            this.stateManager.moveLayer(sourceId, layer.id, isLayerContainer(layer) ? 'inside' : 'before');
+        });
 
         const expand = this.createButton('expand', hasChildren ? (layer.expanded ? '▾' : '▸') : '·', '展開或收合');
         expand.disabled = !hasChildren;
