@@ -38,6 +38,7 @@ class ThreeScene {
         };
 
         this.raycaster = new THREE.Raycaster();
+        this.raycaster.params.Points.threshold = 0.12;
         this.mouse = new THREE.Vector2();
         this.epsilon = 0.01;
 

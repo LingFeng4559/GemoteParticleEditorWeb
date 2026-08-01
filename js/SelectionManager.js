@@ -190,10 +190,15 @@ class SelectionManager {
                 z: startCenter.z + dz
             };
             g.moveTo(newPos);
-            g.particles.forEach((p, idx) => {
-                const mesh = g.meshes[idx];
-                if (mesh) mesh.position.set(p.x, p.y, p.z);
-            });
+            const cloud = g.meshes[0];
+            if (cloud?.isPoints) {
+                this.sceneSync.updateParticleCloud(cloud, g);
+            } else {
+                g.particles.forEach((p, idx) => {
+                    const mesh = g.meshes[idx];
+                    if (mesh) mesh.position.set(p.x, p.y, p.z);
+                });
+            }
             g.updateVisuals(this.sceneManager.scene);
         });
     }

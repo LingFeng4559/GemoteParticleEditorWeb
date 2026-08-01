@@ -73,7 +73,7 @@ class EraserTool {
         this.clearPreview();
 
         const pointsInRange = this.getPointsInRange(position);
-        pointsInRange.particleMeshes.forEach(mesh => {
+        pointsInRange.previewPositions.forEach(previewPosition => {
             const highlightGeometry = new THREE.SphereGeometry(0.12, 16, 16);
             const highlightMaterial = new THREE.MeshBasicMaterial({
                 color: 0xff0000,
@@ -84,7 +84,7 @@ class EraserTool {
             });
 
             const highlightMesh = new THREE.Mesh(highlightGeometry, highlightMaterial);
-            highlightMesh.position.copy(mesh.position);
+            highlightMesh.position.copy(previewPosition);
             highlightMesh.renderOrder = 997;
             this.sceneManager.scene.add(highlightMesh);
             this.previewMeshes.push(highlightMesh);
@@ -102,28 +102,22 @@ class EraserTool {
 
     getPointsInRange(position) {
         const state = this.stateManager.getState();
-        const result = { particleMeshes: [], groupIds: [] };
+        const result = { previewPositions: [], groupIds: [] };
 
         if (state.eraserMode === 'point') {
             state.particlePoints.forEach(p => {
                 const pointPosition = new THREE.Vector3(p.x, p.y, p.z);
                 if (position.distanceTo(pointPosition) <= this.ERASER_RADIUS) {
-                    const particleObj = this.sceneSync.particleObjectMap.get(p.id);
-                    if (particleObj && particleObj.sphereMesh) {
-                        result.particleMeshes.push(particleObj.sphereMesh);
-                    }
+                    result.previewPositions.push(pointPosition);
                 }
             });
 
             state.drawingGroups.forEach(groupData => {
-                const group = this.sceneSync.getGroup(groupData.id);
-                if (!group) return;
-                groupData.particles.forEach((particle, index) => {
+                if (!this.sceneSync.getGroup(groupData.id)) return;
+                groupData.particles.forEach(particle => {
                     const pointPosition = new THREE.Vector3(particle.x, particle.y, particle.z);
                     if (position.distanceTo(pointPosition) <= this.ERASER_RADIUS) {
-                        if (group.meshes[index]) {
-                            result.particleMeshes.push(group.meshes[index]);
-                        }
+                        result.previewPositions.push(pointPosition);
                     }
                 });
             });
@@ -136,7 +130,7 @@ class EraserTool {
                 if (hasParticleInRange) {
                     const group = this.sceneSync.getGroup(groupData.id);
                     if (group) {
-                        result.particleMeshes.push(...group.meshes);
+                        result.previewPositions.push(new THREE.Vector3(group.position.x, group.position.y, group.position.z));
                         result.groupIds.push(groupData.id);
                     }
                 }
@@ -145,10 +139,7 @@ class EraserTool {
             state.particlePoints.forEach(p => {
                 const pointPosition = new THREE.Vector3(p.x, p.y, p.z);
                 if (position.distanceTo(pointPosition) <= this.ERASER_RADIUS) {
-                    const particleObj = this.sceneSync.particleObjectMap.get(p.id);
-                    if (particleObj && particleObj.sphereMesh) {
-                        result.particleMeshes.push(particleObj.sphereMesh);
-                    }
+                    result.previewPositions.push(pointPosition);
                 }
             });
         }

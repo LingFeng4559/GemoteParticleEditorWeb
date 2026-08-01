@@ -11,6 +11,66 @@ class SceneSync {
         this.lastGridSize = null;
     }
 
+    createParticleCloud(groupData) {
+        const particles = groupData.particles || [];
+        const positions = new Float32Array(particles.length * 3);
+        const colors = new Float32Array(particles.length * 3);
+        const color = new THREE.Color();
+        particles.forEach((particle, index) => {
+            const offset = index * 3;
+            positions[offset] = particle.x;
+            positions[offset + 1] = particle.y;
+            positions[offset + 2] = particle.z;
+            color.set(particle.color || groupData.color || '#ff0000');
+            colors[offset] = color.r;
+            colors[offset + 1] = color.g;
+            colors[offset + 2] = color.b;
+        });
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        geometry.computeBoundingSphere();
+        const material = new THREE.PointsMaterial({
+            size: 0.13,
+            sizeAttenuation: true,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.95,
+            depthWrite: true
+        });
+        const cloud = new THREE.Points(geometry, material);
+        cloud.userData.groupId = groupData.id;
+        this.sceneManager.scene.add(cloud);
+        return cloud;
+    }
+
+    createGroupMeshes(groupData) {
+        if (!groupData.isAnimated) return [this.createParticleCloud(groupData)];
+        return (groupData.particles || []).map(particle => {
+            const pointVec = new THREE.Vector3(particle.x, particle.y, particle.z);
+            return this.sceneManager.addPoint({ point: pointVec, color: particle.color || groupData.color });
+        });
+    }
+
+    updateParticleCloud(cloud, groupData) {
+        const particles = groupData.particles || [];
+        const positionAttribute = cloud.geometry.getAttribute('position');
+        const colorAttribute = cloud.geometry.getAttribute('color');
+        if (!positionAttribute || positionAttribute.count !== particles.length || !colorAttribute) return false;
+
+        const color = new THREE.Color();
+        particles.forEach((particle, index) => {
+            positionAttribute.setXYZ(index, particle.x, particle.y, particle.z);
+            color.set(particle.color || groupData.color || '#ff0000');
+            colorAttribute.setXYZ(index, color.r, color.g, color.b);
+        });
+        positionAttribute.needsUpdate = true;
+        colorAttribute.needsUpdate = true;
+        cloud.geometry.computeBoundingSphere();
+        return true;
+    }
+
     sync(state, { isDragging = false } = {}) {
         // 同步群組
         const stateGroupIds = new Set(state.drawingGroups.filter(g => !isLayerContainer(g)).map(g => g.id));
@@ -23,14 +83,7 @@ class SceneSync {
             if (!renderedGroupIds.has(groupData.id)) {
                 const group = DrawingGroup.fromJSON(groupData);
 
-                group.particles.forEach(particle => {
-                    const pointVec = new THREE.Vector3(particle.x, particle.y, particle.z);
-                    const sphereMesh = this.sceneManager.addPoint({
-                        point: pointVec,
-                        color: particle.color || groupData.color
-                    });
-                    group.meshes.push(sphereMesh);
-                });
+                group.meshes.push(...this.createGroupMeshes(groupData));
 
                 this.groupObjectMap.set(groupData.id, group);
                 group.visible = shouldBeVisible;
@@ -47,7 +100,12 @@ class SceneSync {
                     continue;
                 }
 
-                if (group.particles.length !== groupData.particles.length) {
+                const cloud = group.meshes[0];
+                const renderModeChanged = (!!cloud?.isPoints) === !!groupData.isAnimated;
+                const needsRebuild = renderModeChanged ||
+                    (groupData.isAnimated && group.meshes.length !== groupData.particles.length) ||
+                    (!groupData.isAnimated && (!cloud || !this.updateParticleCloud(cloud, groupData)));
+                if (needsRebuild) {
                     // 粒子數量不同，重新渲染
                     group.meshes.forEach(mesh => {
                         if (mesh.geometry) mesh.geometry.dispose();
@@ -60,24 +118,21 @@ class SceneSync {
                     group.bounds = group.calculateBounds();
                     group.position = group.calculateCenter();
 
-                    group.particles.forEach(particle => {
-                        const pointVec = new THREE.Vector3(particle.x, particle.y, particle.z);
-                        const sphereMesh = this.sceneManager.addPoint({
-                            point: pointVec,
-                            color: particle.color || groupData.color
-                        });
-                        group.meshes.push(sphereMesh);
-                    });
+                    group.meshes.push(...this.createGroupMeshes(groupData));
                     group.meshes.forEach(mesh => { mesh.visible = shouldBeVisible; });
                 }
                 if (group.particles.length === groupData.particles.length) {
                     group.particles = groupData.particles;
                     group.position = groupData.position || group.calculateCenter();
                     group.bounds = groupData.bounds || group.calculateBounds();
-                    group.particles.forEach((p, idx) => {
-                        const mesh = group.meshes[idx];
-                        if (mesh) mesh.position.set(p.x, p.y, p.z);
-                    });
+                    if (groupData.isAnimated && !needsRebuild) {
+                        group.particles.forEach((particle, index) => {
+                            const mesh = group.meshes[index];
+                            if (!mesh) return;
+                            mesh.position.set(particle.x, particle.y, particle.z);
+                            mesh.material?.color?.set(particle.color || groupData.color || '#ff0000');
+                        });
+                    }
                     group.updateVisuals(this.sceneManager.scene);
                 }
             }
