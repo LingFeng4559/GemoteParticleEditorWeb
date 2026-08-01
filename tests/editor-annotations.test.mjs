@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildEditorAnnotationLines, buildParticleAnnotation, parseAnnotatedYml } from '../js/yaml/EditorAnnotations.js';
+import { buildEditorAnnotationLines, buildParticleAnnotation, calculateEditorChecksum, parseAnnotatedYml } from '../js/yaml/EditorAnnotations.js';
 
 test('annotation round-trip restores hierarchy, transforms and particles', () => {
     const state = { timelineDuration: 120, drawingGroups: [
@@ -20,4 +20,13 @@ test('annotation round-trip restores hierarchy, transforms and particles', () =>
     assert.equal(project.groups[1].modifiers[0].to, -360);
     assert.equal(project.groups[1].particles[0].x, 1.25);
     assert.equal(project.groups[1].particles[0].color, '#ff0080');
+    assert.deepEqual(project.importWarnings, []);
+    assert.equal(calculateEditorChecksum(state.drawingGroups), calculateEditorChecksum(state.drawingGroups));
+});
+
+test('plain YML is grouped by particle type and damaged annotations report checksum warning', () => {
+    const plain = parseAnnotatedYml('pattern:\n- "particle:flame xoffset:0 yoffset:0 zoffset:0"\n- "particle:heart xoffset:1 yoffset:0 zoffset:0"');
+    assert.deepEqual(plain.groups.map(group => group.name).sort(), ['未註解：flame', '未註解：heart']);
+    const damaged = parseAnnotatedYml('#@gemote-editor {"version":3,"checksum":"bad"}\n#@gemote-layer {"id":"a","name":"A"}\npattern:');
+    assert.equal(damaged.importWarnings.length, 1);
 });

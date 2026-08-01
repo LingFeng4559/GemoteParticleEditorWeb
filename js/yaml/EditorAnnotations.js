@@ -29,9 +29,19 @@ const layerMetadata = layer => ({
     modifiers: layer.modifiers
 });
 
+export function calculateEditorChecksum(layers) {
+    const text = JSON.stringify((layers || []).map(layerMetadata));
+    let hash = 2166136261;
+    for (let index = 0; index < text.length; index++) {
+        hash ^= text.charCodeAt(index);
+        hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
 export function buildEditorAnnotationLines(state) {
     return [
-        `${EDITOR_TAG} ${JSON.stringify({ version: 3, timelineDuration: state.timelineDuration || 80 })}`,
+        `${EDITOR_TAG} ${JSON.stringify({ version: 3, timelineDuration: state.timelineDuration || 80, checksum: calculateEditorChecksum(state.drawingGroups) })}`,
         ...state.drawingGroups.map(layer => `${LAYER_TAG} ${JSON.stringify(layerMetadata(layer))}`)
     ];
 }
@@ -84,12 +94,21 @@ export function parseAnnotatedYml(text) {
             pendingLayerId = null;
         }
     }
-    if (ungrouped.length) layers.push({ id: crypto.randomUUID(), type: 'yml-import', name: '未分組粒子', particles: ungrouped });
+    if (ungrouped.length) {
+        const byType = new Map();
+        for (const particle of ungrouped) {
+            if (!byType.has(particle.particleType)) byType.set(particle.particleType, []);
+            byType.get(particle.particleType).push(particle);
+        }
+        for (const [type, particles] of byType) layers.push({ id: crypto.randomUUID(), type: 'yml-import', name: `未註解：${type}`, particles });
+    }
+    const checksumValid = !editor?.checksum || editor.checksum === calculateEditorChecksum(layers.filter(layer => !layer.name?.startsWith('未註解：')));
     return {
         version: 3,
         name: 'YML 反解析專案',
         particles: [],
         groups: normalizeLayers(layers),
-        settings: { loop, head, timelineDuration: editor?.timelineDuration || 80 }
+        settings: { loop, head, timelineDuration: editor?.timelineDuration || 80 },
+        importWarnings: checksumValid ? [] : ['編輯器註解 checksum 不一致；YML 可能曾被外部修改。']
     };
 }

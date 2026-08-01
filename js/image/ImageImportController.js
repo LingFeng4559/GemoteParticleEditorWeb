@@ -6,6 +6,7 @@ class ImageImportController {
         this.stateManager = stateManager;
         this.elements = elements;
         this.assetLibrary = new AssetLibraryPanel(elements.status, file => this.importFiles([file], { storeAssets: false }));
+        this.workerRequests = new Map();
         this.setupEvents();
     }
 
@@ -55,6 +56,29 @@ class ImageImportController {
         }
     }
 
+    getWorker() {
+        if (!globalThis.Worker) return null;
+        if (this.worker) return this.worker;
+        this.worker = new Worker(new URL('./image-converter.worker.js', import.meta.url), { type: 'module' });
+        this.worker.onmessage = event => {
+            const request = this.workerRequests.get(event.data.id); if (!request) return;
+            this.workerRequests.delete(event.data.id);
+            event.data.error ? request.reject(new Error(event.data.error)) : request.resolve(event.data.result);
+        };
+        this.worker.onerror = () => { this.worker?.terminate(); this.worker = null; };
+        return this.worker;
+    }
+
+    convertAsync(imageData, options) {
+        const worker = this.getWorker();
+        if (!worker) return Promise.resolve(convertImageDataToParticles(imageData, options));
+        const id = crypto.randomUUID();
+        return new Promise((resolve, reject) => {
+            this.workerRequests.set(id, { resolve, reject });
+            worker.postMessage({ id, imageData, options });
+        });
+    }
+
     async importFiles(fileList, { storeAssets = true } = {}) {
         const files = Array.from(fileList || []).filter(file => file.type.startsWith('image/'));
         if (files.length === 0) {
@@ -75,7 +99,7 @@ class ImageImportController {
         for (const file of files) {
             try {
                 const imageData = await this.decodeFile(file, options.outputWidth);
-                const result = convertImageDataToParticles(imageData, options);
+                const result = await this.convertAsync(imageData, options);
                 if (result.particles.length === 0) {
                     errors.push(`${file.name}：沒有通過透明度門檻的像素`);
                     continue;
