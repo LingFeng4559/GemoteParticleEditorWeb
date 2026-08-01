@@ -1,9 +1,11 @@
 import { normalizeTransform } from './AnimationModel.js';
+import { buildSpinModifier, buildTransformFromValues, replaceModifierByType } from './TimelineControlModel.js';
 
 class TimelinePanel {
     constructor(stateManager) {
         this.stateManager = stateManager;
         this.lastFrame = 0;
+        this.commitTimers = new Map();
         this.build();
         this.stateManager.subscribe(state => this.update(state));
         requestAnimationFrame(time => this.animate(time));
@@ -59,8 +61,11 @@ class TimelinePanel {
     }
 
     scheduleCommit(kind) {
-        clearTimeout(this.commitTimer);
-        this.commitTimer = setTimeout(() => kind === 'spin' ? this.commitSpin() : this.commitTransform(), 120);
+        clearTimeout(this.commitTimers.get(kind));
+        this.commitTimers.set(kind, setTimeout(() => {
+            this.commitTimers.delete(kind);
+            kind === 'spin' ? this.commitSpin() : this.commitTransform();
+        }, 120));
     }
 
     selectedLayer() {
@@ -70,11 +75,11 @@ class TimelinePanel {
     commitTransform() {
         const layer = this.selectedLayer();
         if (!layer) return;
-        const transform = normalizeTransform(layer.transform);
+        const values = {};
         this.root.querySelectorAll('[data-transform]').forEach(input => {
-            const [group, key] = input.dataset.transform.split('.');
-            transform[group][key] = Number(input.value) || 0;
+            values[input.dataset.transform] = input.value;
         });
+        const transform = buildTransformFromValues(layer.transform, values);
         this.stateManager.updateLayerAnimation(layer.id, { transform });
     }
 
@@ -82,14 +87,14 @@ class TimelinePanel {
         const layer = this.selectedLayer();
         if (!layer) return;
         const read = key => this.root.querySelector(`[data-spin="${key}"]`);
-        const modifier = {
-            id: layer.modifiers?.find(item => item.type === 'spin')?.id || crypto.randomUUID(), type: 'spin', name: '旋轉',
+        const current = layer.modifiers?.find(item => item.type === 'spin');
+        const modifier = buildSpinModifier(current, {
             enabled: read('enabled').checked, axis: read('axis').value,
-            from: Number(read('from').value) || 0, to: Number(read('to').value) || 0,
-            startTick: Math.max(0, Number(read('startTick').value) || 0), duration: Math.max(1, Number(read('duration').value) || 1),
+            from: read('from').value, to: read('to').value,
+            startTick: read('startTick').value, duration: read('duration').value,
             easing: read('easing').value
-        };
-        const modifiers = [...(layer.modifiers || []).filter(item => item.type !== 'spin'), modifier];
+        });
+        const modifiers = replaceModifierByType(layer.modifiers, modifier);
         this.stateManager.updateLayerAnimation(layer.id, { modifiers });
     }
 
@@ -106,10 +111,15 @@ class TimelinePanel {
         if (!layer) return;
         const transform = normalizeTransform(layer.transform);
         this.root.querySelectorAll('[data-transform]').forEach(input => {
+            if (document.activeElement === input || this.commitTimers.has('transform')) return;
             const [group, key] = input.dataset.transform.split('.'); input.value = transform[group][key];
         });
         const spin = layer.modifiers?.find(item => item.type === 'spin');
-        const set = (key, value) => { const input = this.root.querySelector(`[data-spin="${key}"]`); if (input.type === 'checkbox') input.checked = !!value; else input.value = value; };
+        const set = (key, value) => {
+            const input = this.root.querySelector(`[data-spin="${key}"]`);
+            if (document.activeElement === input || this.commitTimers.has('spin')) return;
+            if (input.type === 'checkbox') input.checked = !!value; else input.value = value;
+        };
         set('enabled', spin?.enabled); set('axis', spin?.axis || 'Y'); set('from', spin?.from ?? 0); set('to', spin?.to ?? 360);
         set('startTick', spin?.startTick ?? 0); set('duration', spin?.duration ?? state.timelineDuration); set('easing', spin?.easing || 'linear');
     }

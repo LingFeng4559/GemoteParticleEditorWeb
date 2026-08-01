@@ -1,0 +1,42 @@
+{
+  "name": "AB 雙向旋轉驗收",
+  "version": "3.0",
+  "particles": [],
+  "groups": [
+    {
+      "id": "rings",
+      "type": "layer-group",
+      "layerKind": "group",
+      "name": "雙環群組",
+      "parentId": null,
+      "particles": [],
+      "visible": true,
+      "exportEnabled": true
+    },
+    {
+      "id": "ring-a",
+      "type": "image",
+      "layerKind": "content",
+      "name": "A 左旋 360",
+      "parentId": "rings",
+      "visible": true,
+      "exportEnabled": true,
+      "particles": [{ "id": "a-1", "x": 1, "y": 0, "z": 0, "particleType": "redstone", "color": "#ff0000" }],
+      "transform": { "pivot": { "x": 0, "y": 0, "z": 0 } },
+      "modifiers": [{ "id": "spin-a", "type": "spin", "enabled": true, "axis": "Y", "from": 0, "to": -360, "startTick": 0, "duration": 80, "easing": "linear" }]
+    },
+    {
+      "id": "ring-b",
+      "type": "image",
+      "layerKind": "content",
+      "name": "B 右旋 360",
+      "parentId": "rings",
+      "visible": true,
+      "exportEnabled": true,
+      "particles": [{ "id": "b-1", "x": 1, "y": 0, "z": 0, "particleType": "redstone", "color": "#0000ff" }],
+      "transform": { "pivot": { "x": 0, "y": 0, "z": 0 } },
+      "modifiers": [{ "id": "spin-b", "type": "spin", "enabled": true, "axis": "Y", "from": 0, "to": 360, "startTick": 0, "duration": 80, "easing": "linear" }]
+    }
+  ],
+  "settings": { "timelineDuration": 80, "loop": 0, "head": false }
+}
