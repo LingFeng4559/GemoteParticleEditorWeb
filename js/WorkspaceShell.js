@@ -163,10 +163,13 @@ class WorkspaceShell {
             event.currentTarget.setAttribute('aria-pressed', String(visible));
         });
         document.querySelector('#viewport-toolbar [data-command="character"]').addEventListener('click', event => {
-            const visible = !this.sceneManager.characterGroup.visible;
-            this.sceneManager.characterGroup.visible = visible;
-            event.currentTarget.classList.toggle('active', visible);
-            event.currentTarget.setAttribute('aria-pressed', String(visible));
+            const currentMode = this.stateManager.getState().characterMode;
+            if (currentMode === 'hidden') {
+                this.stateManager.setCharacterMode(this.lastVisibleCharacterMode || 'opaque');
+            } else {
+                this.lastVisibleCharacterMode = currentMode;
+                this.stateManager.setCharacterMode('hidden');
+            }
         });
     }
 
@@ -248,6 +251,10 @@ class WorkspaceShell {
         const preview = document.querySelector('[data-command="preview"]');
         preview.classList.toggle('active', !!state.timelinePlaying);
         preview.textContent = state.timelinePlaying ? '❚❚ 暫停' : '▶ 播放';
+        const characterButton = document.querySelector('#viewport-toolbar [data-command="character"]');
+        const characterVisible = state.characterMode !== 'hidden';
+        characterButton?.classList.toggle('active', characterVisible);
+        characterButton?.setAttribute('aria-pressed', String(characterVisible));
         document.querySelector('#quick-start').classList.toggle('visible', particleCount === 0 && this.workspace === 'draw' && !this.quickStartDismissed);
     }
 

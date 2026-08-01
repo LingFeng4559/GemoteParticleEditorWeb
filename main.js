@@ -311,6 +311,12 @@ class App {
 
     handleMouseUp(event) {
         const state = this.stateManager.getState();
+        const hasActiveInteraction = state.isDrawing
+            || this.selectionManager.isMarqueeActive
+            || this.selectionManager.isDragging
+            || !!this.brushTool.currentGroup
+            || this.shapeTool.isActive();
+        if (!hasActiveInteraction) return;
         try {
         
         // 總是在 MouseUp 時恢復相機控制
