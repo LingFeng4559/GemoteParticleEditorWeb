@@ -1069,8 +1069,7 @@ input[type="range"]:hover::-webkit-slider-thumb { background-color: var(--primar
 .image-position-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
 .image-position-grid label { display: grid; gap: 3px; color: #94a3b8; font-size: 9px; }
 .image-position-grid input { min-width: 0; width: 100%; }
-.image-scale-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 6px; }
-.image-scale-actions button { width: auto; min-height: 28px; padding: 4px 6px; color: #cbd5e1; background: #1e293b; border: 1px solid #475569; border-radius: 5px; font-size: 9px; }
+.image-position-grid .image-size-field { grid-column: 1 / -1; }
 .image-placement-tip { display: block; margin-top: 7px; color: #7dd3fc; font-size: 9px; line-height: 1.45; }
 .image-placement-actions { display: grid; grid-template-columns: 1fr auto; gap: 6px; margin-top: 8px; }
 
