@@ -43,6 +43,50 @@ class StateManager {
 
         // 監聽器
         this.listeners = [];
+        this.undoStack = [];
+        this.redoStack = [];
+        this.historyLimit = 50;
+        this._restoringHistory = false;
+    }
+
+    createHistorySnapshot() {
+        const clean = value => JSON.parse(JSON.stringify(value, (key, item) =>
+            ['sphereMesh', 'lineSegment', 'meshes', 'boundingBox', 'resizeHandles'].includes(key) ? undefined : item
+        ));
+        return clean({ particlePoints: this.particlePoints, drawingGroups: this.drawingGroups, selectedGroupId: this.selectedGroup?.id || null });
+    }
+
+    captureHistory() {
+        if (this._restoringHistory) return;
+        this.undoStack.push(this.createHistorySnapshot());
+        if (this.undoStack.length > this.historyLimit) this.undoStack.shift();
+        this.redoStack = [];
+    }
+
+    restoreHistorySnapshot(snapshot) {
+        this._restoringHistory = true;
+        this.particlePoints = snapshot.particlePoints || [];
+        this.drawingGroups = normalizeLayers(snapshot.drawingGroups || []);
+        this.selectedGroup = this.drawingGroups.find(layer => layer.id === snapshot.selectedGroupId) || null;
+        this._restoringHistory = false;
+        this.hasUnsavedChanges = true;
+        this.notify();
+    }
+
+    undo() {
+        const snapshot = this.undoStack.pop();
+        if (!snapshot) return false;
+        this.redoStack.push(this.createHistorySnapshot());
+        this.restoreHistorySnapshot(snapshot);
+        return true;
+    }
+
+    redo() {
+        const snapshot = this.redoStack.pop();
+        if (!snapshot) return false;
+        this.undoStack.push(this.createHistorySnapshot());
+        this.restoreHistorySnapshot(snapshot);
+        return true;
     }
 
     // --- 訂閱/發布模式，用於狀態變更通知 ---
@@ -266,6 +310,7 @@ class StateManager {
     updateLayerAnimation(layerId, updates) {
         const layer = this.drawingGroups.find(group => group.id === layerId);
         if (!layer) return false;
+        this.captureHistory();
         for (const key of ['transform', 'timing', 'tracks', 'modifiers']) {
             if (Object.prototype.hasOwnProperty.call(updates, key)) layer[key] = updates[key];
         }
@@ -367,6 +412,7 @@ class StateManager {
     }
 
     addPoint(pointData) {
+        this.captureHistory();
         this.particlePoints.push(pointData);
         this.setUnsavedChanges(true);
         this.notify();
@@ -404,6 +450,7 @@ class StateManager {
     clearPoints() {
         const hadPoints = this.particlePoints.length > 0;
         const hadGroups = this.drawingGroups.length > 0;
+        if (hadPoints || hadGroups) this.captureHistory();
         this.particlePoints = [];
         this.drawingGroups = [];
         this.selectedGroup = null;
@@ -414,12 +461,14 @@ class StateManager {
     }
 
     addGroup(groupData) {
+        this.captureHistory();
         this.drawingGroups.push(normalizeLayer(groupData, this.drawingGroups.length));
         this.setUnsavedChanges(true);
         this.notify();
     }
 
     addLayerGroup({ name = '新群組', parentId = null } = {}) {
+        this.captureHistory();
         const group = normalizeLayer({
             id: crypto.randomUUID(),
             type: 'layer-group',
@@ -437,6 +486,7 @@ class StateManager {
     updateLayerState(layerId, updates) {
         const layer = this.drawingGroups.find(group => group.id === layerId);
         if (!layer) return false;
+        this.captureHistory();
         const allowed = ['name', 'parentId', 'visible', 'exportEnabled', 'locked', 'solo', 'expanded', 'order', 'layerColor'];
         for (const key of allowed) {
             if (Object.prototype.hasOwnProperty.call(updates, key)) layer[key] = updates[key];
@@ -452,6 +502,7 @@ class StateManager {
         const target = this.drawingGroups.find(item => item.id === targetId);
         if (!layer || !target || layerId === targetId) return false;
         if (new Set(getLayerDescendantIds(layerId, this.drawingGroups)).has(targetId)) return false;
+        this.captureHistory();
         const targetIsGroup = target.layerKind === 'group' || target.type === 'layer-group';
         layer.parentId = placement === 'inside' && targetIsGroup ? target.id : target.parentId;
         const siblings = this.drawingGroups
@@ -469,6 +520,7 @@ class StateManager {
     removeGroup(groupId) {
         const index = this.drawingGroups.findIndex(g => g.id === groupId);
         if (index !== -1) {
+            this.captureHistory();
             const idsToRemove = new Set([groupId, ...getLayerDescendantIds(groupId, this.drawingGroups)]);
             this.drawingGroups = this.drawingGroups.filter(group => !idsToRemove.has(group.id));
             if (this.selectedGroup && this.selectedGroup.id === groupId) {
@@ -482,6 +534,7 @@ class StateManager {
     updateGroup(groupId, updates) {
         const group = this.drawingGroups.find(g => g.id === groupId);
         if (group) {
+            this.captureHistory();
             Object.assign(group, updates);
             this.setUnsavedChanges(true);
             this.notify();
@@ -489,6 +542,7 @@ class StateManager {
     }
 
     loadProject(projectData) {
+        this._restoringHistory = true;
         projectData = migrateProject(projectData);
         this.clearPoints();
         this.currentProjectName = projectData.name || '未命名專案';
@@ -572,6 +626,9 @@ class StateManager {
         }
 
         this.setUnsavedChanges(false);
+        this.undoStack = [];
+        this.redoStack = [];
+        this._restoringHistory = false;
         this.notify();
     }
 }

@@ -76,7 +76,8 @@ class App {
             }
 
             const isZ = e.key.toLowerCase() === 'z' || e.code === 'KeyZ';
-            if ((e.ctrlKey || e.metaKey) && isZ) {
+            const isY = e.key.toLowerCase() === 'y' || e.code === 'KeyY';
+            if ((e.ctrlKey || e.metaKey) && (isZ || isY)) {
                 // 排除輸入框
                 const active = document.activeElement;
                 const isTyping = active && (
@@ -87,8 +88,9 @@ class App {
                 if (!isTyping) {
                     e.preventDefault();
                     e.stopImmediatePropagation();
-                    console.log('[Undo] 執行全域撤銷');
-                    this.stateManager.undoLastPoint();
+                    const redo = isY || (isZ && e.shiftKey);
+                    console.log(redo ? '[Redo] 執行全域重做' : '[Undo] 執行全域撤銷');
+                    if (redo) this.stateManager.redo(); else this.stateManager.undo();
                     this.showUndoFeedback();
                 }
             }

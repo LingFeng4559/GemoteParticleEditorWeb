@@ -89,6 +89,7 @@ class UIManager {
         this.copyCodeBtn = q('#btn-copy-code');
         this.clearBtn = q('#btn-clear');
         this.undoBtn = q('#btn-undo');
+        this.redoBtn = q('#btn-redo');
         this.codeOutput = q('#code-output');
         this.exportQualitySelect = q('#export-quality');
         this.exportCommandLimitInput = q('#export-command-limit');
@@ -203,7 +204,8 @@ class UIManager {
             this.codeGenerator.estimate();
         });
         safeAdd(this.clearBtn, 'click', () => this.requestClear());
-        safeAdd(this.undoBtn, 'click', () => this.stateManager.undoLastPoint());
+        safeAdd(this.undoBtn, 'click', () => this.stateManager.undo());
+        safeAdd(this.redoBtn, 'click', () => this.stateManager.redo());
 
         safeAdd(this.projectNameInput, 'input', (e) => this.stateManager.setProjectName(e.target.value));
         safeAdd(this.skillIdInput, 'input', (e) => this.stateManager.setSkillId(e.target.value));
