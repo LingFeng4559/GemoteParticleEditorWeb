@@ -433,6 +433,7 @@ class App {
 
     initLocalStorage() {
         this.localStorageManager.init();
+        requestAnimationFrame(() => this.workspaceShell.framePreview());
         const storageInfo = this.localStorageManager.getStorageInfo();
         if (storageInfo) {
             console.log(`[Storage] 使用量: ${storageInfo.totalSize}MB (約 ${storageInfo.usage}%)`);

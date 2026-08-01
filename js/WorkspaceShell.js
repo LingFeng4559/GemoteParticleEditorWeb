@@ -124,7 +124,7 @@ class WorkspaceShell {
         document.querySelectorAll('[data-start-action]').forEach(button => button.addEventListener('click', () => {
             const action = button.dataset.startAction;
             if (action === 'image') { this.setLeftTab('assets'); document.querySelector('#btn-import-images')?.click(); }
-            if (action === 'brush') { this.setLeftTab('tools'); this.stateManager.setMode('brush'); }
+            if (action === 'brush') { this.quickStartDismissed = true; this.setLeftTab('tools'); this.stateManager.setMode('brush'); }
             if (action === 'load') document.querySelector('#btn-load-project')?.click();
         }));
         document.querySelector('#viewport-toolbar [data-command="frame"]').addEventListener('click', () => this.framePreview());
@@ -152,6 +152,7 @@ class WorkspaceShell {
         if (workspace === 'export') document.querySelector('[data-section="actions-output"]')?.classList.remove('collapsed');
         if (workspace === 'draw') this.setLeftTab('tools');
         if (workspace === 'animate') this.setLeftTab('hierarchy');
+        if (workspace === 'export') this.setLeftTab('hierarchy');
         if (workspace === 'export') requestAnimationFrame(() => {
             document.querySelector('#btn-estimate-export')?.click();
             document.querySelector('[data-section="actions-output"]')?.scrollIntoView({ block: 'start' });
@@ -206,7 +207,7 @@ class WorkspaceShell {
         const preview = document.querySelector('[data-command="preview"]');
         preview.classList.toggle('active', !!state.timelinePlaying);
         preview.textContent = state.timelinePlaying ? '❚❚ 暫停' : '▶ 播放';
-        document.querySelector('#quick-start').classList.toggle('visible', particleCount === 0 && this.workspace === 'draw');
+        document.querySelector('#quick-start').classList.toggle('visible', particleCount === 0 && this.workspace === 'draw' && !this.quickStartDismissed);
     }
 
     modeLabel(mode) {
