@@ -26,8 +26,8 @@ class ThreeScene {
             return;
         }
 
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        this.resizeToCanvas();
 
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = false;
@@ -46,6 +46,8 @@ class ThreeScene {
         this.animate();
 
         window.addEventListener('resize', () => this.onWindowResize());
+        this.canvasResizeObserver = new ResizeObserver(() => this.resizeToCanvas());
+        this.canvasResizeObserver.observe(this.canvas);
     }
 
     setupSceneElements() {
@@ -272,9 +274,16 @@ class ThreeScene {
     }
 
     onWindowResize() {
-        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.resizeToCanvas();
+    }
+
+    resizeToCanvas() {
+        if (!this.renderer || !this.camera || !this.canvas) return;
+        const width = Math.max(1, Math.round(this.canvas.clientWidth || window.innerWidth));
+        const height = Math.max(1, Math.round(this.canvas.clientHeight || window.innerHeight));
+        this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setSize(width, height, false);
     }
 
     animate() {

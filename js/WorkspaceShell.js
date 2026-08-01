@@ -23,11 +23,11 @@ class WorkspaceShell {
                     <button data-workspace="export">匯出</button>
                 </nav>
                 <div class="global-actions">
-                    <button data-command="undo" title="復原 Ctrl+Z">↶</button>
-                    <button data-command="redo" title="重做 Ctrl+Shift+Z">↷</button>
+                    <button data-command="undo" title="復原 Ctrl+Z" aria-label="復原">↶</button>
+                    <button data-command="redo" title="重做 Ctrl+Shift+Z" aria-label="重做">↷</button>
                     <span class="toolbar-separator"></span>
                     <button data-command="save">儲存</button>
-                    <button data-command="preview" class="preview-command">▶ 預覽</button>
+                    <button data-command="preview" class="preview-command">▶ 播放</button>
                     <button data-command="export" class="export-command">匯出 YML</button>
                 </div>
             </header>
@@ -49,8 +49,18 @@ class WorkspaceShell {
             <div id="viewport-toolbar" aria-label="視窗工具列">
                 <span data-role="mode">相機模式</span><span class="toolbar-separator"></span>
                 <button data-command="frame" title="聚焦選取 F">聚焦</button>
-                <button data-command="grid" class="active">網格</button>
-                <button data-command="character" class="active">Steve</button>
+                <button data-command="grid" class="active" aria-pressed="true">網格</button>
+                <button data-command="character" class="active" aria-pressed="true">Steve</button>
+            </div>
+            <div id="quick-start" aria-label="快速開始">
+                <span class="quick-start-mark">✦</span>
+                <h2>開始建立粒子效果</h2>
+                <p>選擇一種方式開始；所有設定之後都能調整。</p>
+                <div>
+                    <button data-start-action="image">▧ 匯入圖片</button>
+                    <button data-start-action="brush">✎ 使用筆刷</button>
+                    <button data-start-action="load">↥ 載入專案／YML</button>
+                </div>
             </div>
             <div id="preview-hud" aria-label="預覽控制">
                 <button data-preview-action="restart">↺ 重新播放</button>
@@ -111,16 +121,24 @@ class WorkspaceShell {
             this.stateManager.setTimelineTick(0);
             this.stateManager.setTimelinePlaying(true);
         });
+        document.querySelectorAll('[data-start-action]').forEach(button => button.addEventListener('click', () => {
+            const action = button.dataset.startAction;
+            if (action === 'image') { this.setLeftTab('assets'); document.querySelector('#btn-import-images')?.click(); }
+            if (action === 'brush') { this.setLeftTab('tools'); this.stateManager.setMode('brush'); }
+            if (action === 'load') document.querySelector('#btn-load-project')?.click();
+        }));
         document.querySelector('#viewport-toolbar [data-command="frame"]').addEventListener('click', () => this.framePreview());
         document.querySelector('#viewport-toolbar [data-command="grid"]').addEventListener('click', event => {
             const visible = !this.sceneManager.gridHelper.visible;
             this.sceneManager.gridHelper.visible = visible;
             event.currentTarget.classList.toggle('active', visible);
+            event.currentTarget.setAttribute('aria-pressed', String(visible));
         });
         document.querySelector('#viewport-toolbar [data-command="character"]').addEventListener('click', event => {
             const visible = !this.sceneManager.characterGroup.visible;
             this.sceneManager.characterGroup.visible = visible;
             event.currentTarget.classList.toggle('active', visible);
+            event.currentTarget.setAttribute('aria-pressed', String(visible));
         });
     }
 
@@ -144,6 +162,7 @@ class WorkspaceShell {
             this.stateManager.setTimelinePlaying(true);
         }
         if (previousWorkspace === 'preview' && workspace !== 'preview') this.stateManager.setTimelinePlaying(false);
+        this.update(this.stateManager.getState());
     }
 
     setTimelineCollapsed(collapsed) {
@@ -167,10 +186,15 @@ class WorkspaceShell {
         document.body.classList.toggle('has-layer-selection', !!selected);
         const particleCount = (state.particlePoints || []).length + (state.drawingGroups || []).reduce((sum, layer) => sum + (layer.particles?.length || 0), 0);
         document.querySelector('[data-role="project-name"]').textContent = state.projectName || '未命名專案';
-        document.querySelector('[data-role="selection-name"]').textContent = selected?.name || '未選取圖層';
+        const inspectorTitle = this.workspace === 'draw' ? '工具設定'
+            : this.workspace === 'export' ? '匯出設定'
+                : selected?.name || '未選取圖層';
+        document.querySelector('[data-role="selection-name"]').textContent = inspectorTitle;
         const context = document.querySelector('[data-role="selection-context"]');
         context.classList.toggle('has-selection', !!selected);
-        context.innerHTML = selected
+        context.innerHTML = this.workspace === 'draw'
+            ? '<span class="context-icon">✎</span><div><strong>新筆畫設定</strong><p>下方粒子、鏡像與參考模型設定會套用到接下來的繪製。</p></div>'
+            : selected
             ? `<span class="context-icon">${selected.type === 'group' ? '▣' : '◆'}</span><div><strong>${selected.type === 'group' ? '群組' : '粒子圖層'}</strong><p>${selected.particles?.length || 0} 個粒子 · ${selected.locked ? '已鎖定' : '可編輯'}</p></div>`
             : '<span class="context-icon">◇</span><div><strong>選取一個圖層</strong><p>從 Hierarchy 或 Viewport 選取內容後，在這裡編輯屬性與動畫。</p></div>';
         document.querySelector('[data-role="status-selection"]').textContent = selected ? `選取：${selected.name}` : '沒有選取項目';
@@ -181,7 +205,8 @@ class WorkspaceShell {
         document.querySelector('[data-role="mode"]').textContent = `${this.modeLabel(state.mode)}模式`;
         const preview = document.querySelector('[data-command="preview"]');
         preview.classList.toggle('active', !!state.timelinePlaying);
-        preview.textContent = state.timelinePlaying ? '❚❚ 暫停' : '▶ 預覽';
+        preview.textContent = state.timelinePlaying ? '❚❚ 暫停' : '▶ 播放';
+        document.querySelector('#quick-start').classList.toggle('visible', particleCount === 0 && this.workspace === 'draw');
     }
 
     modeLabel(mode) {

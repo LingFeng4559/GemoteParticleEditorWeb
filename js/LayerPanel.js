@@ -43,6 +43,7 @@ class LayerPanel {
         button.dataset.layerAction = action;
         button.textContent = label;
         button.title = title;
+        button.setAttribute('aria-label', title);
         return button;
     }
 
@@ -85,9 +86,9 @@ class LayerPanel {
         });
         row.appendChild(name);
 
-        row.appendChild(this.createButton('visible', layer.visible ? '●' : '○', layer.visible ? '在 Viewport 隱藏' : '在 Viewport 顯示', layer.visible));
-        row.appendChild(this.createButton('export', layer.exportEnabled ? 'E' : '—', layer.exportEnabled ? '從匯出中排除' : '加入匯出', layer.exportEnabled));
-        row.appendChild(this.createButton('lock', layer.locked ? 'L' : 'U', layer.locked ? '解除鎖定' : '鎖定圖層', layer.locked));
+        row.appendChild(this.createButton('visible', layer.visible ? '◉' : '○', layer.visible ? '在 Viewport 隱藏' : '在 Viewport 顯示', layer.visible));
+        row.appendChild(this.createButton('export', layer.exportEnabled ? '↥' : '—', layer.exportEnabled ? '從匯出中排除' : '加入匯出', layer.exportEnabled));
+        row.appendChild(this.createButton('lock', layer.locked ? '🔒' : '🔓', layer.locked ? '解除鎖定' : '鎖定圖層', layer.locked));
         row.appendChild(this.createButton('solo', 'S', '只顯示此圖層', layer.solo));
         row.appendChild(this.createButton('delete', '×', '刪除圖層'));
 
