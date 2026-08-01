@@ -4,6 +4,7 @@ import InlineEditor from './InlineEditor.js';
 import lang from './LanguageManager.js';
 import LayerPanel from './LayerPanel.js';
 import ImageImportController from './image/ImageImportController.js';
+import { getParticleSpacing, getPreviewAxisPositions } from './DensityModel.js';
 
 class UIManager {
     constructor(stateManager) {
@@ -141,6 +142,7 @@ class UIManager {
         this.particleDensitySlider = q('#particle-density');
         this.densityDisplay = q('#density-display');
         this.densityPreviewCanvas = q('#density-preview-canvas');
+        this.densityHint = q('.density-hint');
         if (this.densityPreviewCanvas) {
             this.densityPreviewCtx = this.densityPreviewCanvas.getContext('2d');
         }
@@ -449,7 +451,8 @@ class UIManager {
 
         setVal(this.particleDensitySlider, state.particleDensity);
         const density = typeof state.particleDensity === 'number' ? state.particleDensity : 1.0;
-        setTxt(this.densityDisplay, density.toFixed(1));
+        setTxt(this.densityDisplay, `${density.toFixed(1)}×`);
+        setTxt(this.densityHint, `${lang.get('density_spacing')}: ${getParticleSpacing(density).toFixed(2)} · ${lang.get('density_preview_range')}: 2 × 2`);
         this.drawDensityPreview(density);
 
         if(this.floatingPalette) this.floatingPalette.update(state);
@@ -468,19 +471,19 @@ class UIManager {
         
         ctx.clearRect(0, 0, w, h);
         
-        // 重新校準：場景實際間距為 1.8 / density。
-        // 當 density = 1.0 時，間距為 1.8 單位（約一格高度）。
-        // 讓預覽圖更能反應這種稀疏感。
-        const baseSpacing = 40; // 增大基礎間距
-        const spacing = baseSpacing / density;
-        const padding = 5;
+        // 固定顯示 2 × 2 世界單位，與實際形狀填充採用相同取樣公式。
+        const padding = 8;
+        const usableWidth = w - padding * 2;
+        const usableHeight = h - padding * 2;
+        const positions = getPreviewAxisPositions(density, 2);
         
         ctx.fillStyle = '#0099ff';
-        for (let x = padding; x <= w - padding; x += spacing) {
-            for (let y = padding; y <= h - padding; y += spacing) {
+        for (const worldX of positions) {
+            for (const worldY of positions) {
+                const x = padding + (worldX / 2) * usableWidth;
+                const y = padding + (worldY / 2) * usableHeight;
                 ctx.beginPath();
-                const radius = Math.max(1.2, Math.min(2.5, 2.0 / density));
-                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.arc(x, y, 1.8, 0, Math.PI * 2);
                 ctx.fill();
             }
         }

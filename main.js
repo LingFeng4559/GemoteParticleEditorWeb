@@ -293,7 +293,7 @@ class App {
         switch (state.currentMode) {
             case 'brush': {
                 const result = this.brushTool.continueStroke(intersectPoint, state, state.lastPointPosition);
-                if (result) this.stateManager.setLastPointPosition(intersectPoint);
+                if (result) this.stateManager.setLastPointPosition(result);
                 break;
             }
             case 'eraser':

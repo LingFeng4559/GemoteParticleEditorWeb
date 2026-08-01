@@ -1,5 +1,6 @@
 import { migrateProject } from './ProjectSchema.js';
 import { getLayerDescendantIds, normalizeLayer, normalizeLayers } from './LayerModel.js';
+import { normalizeParticleDensity } from './DensityModel.js';
 
 class StateManager {
     constructor() {
@@ -388,7 +389,7 @@ class StateManager {
     }
 
     setParticleDensity(density) {
-        this.particleDensity = Math.max(0.1, Math.min(10, parseFloat(density) || 1.0));
+        this.particleDensity = normalizeParticleDensity(density);
         this.setUnsavedChanges(true);
         this.notify();
     }
@@ -573,7 +574,7 @@ class StateManager {
             this.radialSymmetryMode = projectData.settings.radialSymmetryMode || 'equal';
             this.radialSymmetryCount = projectData.settings.radialSymmetryCount || 4;
             this.radialSymmetryOffset = projectData.settings.radialSymmetryOffset || 0;
-            this.particleDensity = projectData.settings.particleDensity || 1.0;
+            this.particleDensity = normalizeParticleDensity(projectData.settings.particleDensity);
             this.characterMode = projectData.settings.characterMode || 'opaque';
             this.timelineDuration = Math.max(1, Number(projectData.settings.timelineDuration) || 80);
         } else {

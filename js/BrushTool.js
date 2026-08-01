@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import DrawingGroup from './DrawingGroup.js';
 import { reflectSingleParticle } from './ReflectionUtil.js';
+import { getSegmentSampleDistances } from './DensityModel.js';
 
 class BrushTool {
     constructor(sceneManager) {
@@ -57,14 +58,9 @@ class BrushTool {
         const lastPos = new THREE.Vector3(lastPointPosition.x, lastPointPosition.y, lastPointPosition.z);
         
         // 筆刷間距與形狀工具對齊，基準設為 0.5。
-        const minDistance = 0.5 / (state.particleDensity || 1.0);
-        if (intersectPoint.distanceTo(lastPos) <= minDistance) return null;
-
-        const basePoint = {
-            id: crypto.randomUUID(),
-            x: intersectPoint.x, y: intersectPoint.y, z: intersectPoint.z,
-            particleType: state.particleType, color: state.particleColor
-        };
+        const distance = intersectPoint.distanceTo(lastPos);
+        const sampleDistances = getSegmentSampleDistances(distance, state.particleDensity);
+        if (!sampleDistances.length) return null;
 
         const mirrorSettings = {
             horizontalX: state.horizontalMirrorEnabled,
@@ -78,19 +74,24 @@ class BrushTool {
             radialSymmetryOffset: state.radialSymmetryOffset
         };
 
-        const allPoints = reflectSingleParticle(basePoint, mirrorSettings);
-
-        for (const p of allPoints) {
-            this.currentGroup.addParticle(p);
-            const previewMesh = this.sceneManager.addPoint({
-                point: new THREE.Vector3(p.x, p.y, p.z),
-                color: p.color,
-                opacity: 0.5
-            });
-            this.previewMeshes.push(previewMesh);
+        let lastBasePoint = null;
+        for (const sampleDistance of sampleDistances) {
+            const ratio = Math.min(1, sampleDistance / distance);
+            const sample = lastPos.clone().lerp(intersectPoint, ratio);
+            lastBasePoint = {
+                id: crypto.randomUUID(), x: sample.x, y: sample.y, z: sample.z,
+                particleType: state.particleType, color: state.particleColor
+            };
+            const allPoints = reflectSingleParticle(lastBasePoint, mirrorSettings);
+            for (const p of allPoints) {
+                this.currentGroup.addParticle(p);
+                const previewMesh = this.sceneManager.addPoint({
+                    point: new THREE.Vector3(p.x, p.y, p.z), color: p.color, opacity: 0.5
+                });
+                this.previewMeshes.push(previewMesh);
+            }
         }
-
-        return basePoint;
+        return lastBasePoint;
     }
 
     finishStroke() {

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import DrawingGroup from './DrawingGroup.js';
 import { reflectParticles } from './ReflectionUtil.js';
+import { getParticleSpacing } from './DensityModel.js';
 
 class ShapeTool {
     constructor(sceneManager) {
@@ -69,7 +70,7 @@ class ShapeTool {
         const particles = [];
         // 將基準間距調整為 0.5。這樣在 density = 1.0 時，間距為 0.5，比原本的 1.8 更密集。
         // 這能確保圖形邊緣與填充更飽滿，同時滿足 UI 預覽的 1.0 基準。
-        const spacing = 0.5 / (state.particleDensity || 1.0);
+        const spacing = getParticleSpacing(state.particleDensity);
 
         const addLocalPart = (lx, lz) => {
             const wp = planeToWorld(new THREE.Vector3(lx, 0, lz));
