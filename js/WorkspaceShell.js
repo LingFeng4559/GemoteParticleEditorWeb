@@ -203,7 +203,7 @@ class WorkspaceShell {
         document.querySelector('[data-role="status-time"]').textContent = `Tick ${Math.round(state.timelineTick || 0)} / ${state.timelineDuration || 80}`;
         document.querySelector('[data-role="preview-particles"]').textContent = `${particleCount.toLocaleString()} 粒子`;
         document.querySelector('[data-role="preview-tick"]').textContent = `Tick ${Math.round(state.timelineTick || 0)} / ${state.timelineDuration || 80}`;
-        document.querySelector('[data-role="mode"]').textContent = `${this.modeLabel(state.mode)}模式`;
+        document.querySelector('[data-role="mode"]').textContent = `${this.modeLabel(state.currentMode)}模式`;
         const preview = document.querySelector('[data-command="preview"]');
         preview.classList.toggle('active', !!state.timelinePlaying);
         preview.textContent = state.timelinePlaying ? '❚❚ 暫停' : '▶ 播放';

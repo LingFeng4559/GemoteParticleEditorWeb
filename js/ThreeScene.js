@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { clientToNdc } from './ViewportCoordinates.js';
 
 class ThreeScene {
     constructor(canvas) {
@@ -232,8 +233,7 @@ class ThreeScene {
     }
 
     getRawIntersectPoint(event, height, rotation, offset) {
-        this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        this.updatePointerFromEvent(event);
         this.raycaster.setFromCamera(this.mouse, this.camera);
         
         this.dynamicTargetPlane.position.set(offset.x, height, offset.z);
@@ -245,6 +245,12 @@ class ThreeScene {
         
         const intersects = this.raycaster.intersectObject(this.dynamicTargetPlane, false);
         return intersects.length > 0 ? intersects[0].point : null;
+    }
+
+    updatePointerFromEvent(event, target = this.mouse) {
+        const ndc = clientToNdc(event.clientX, event.clientY, this.canvas.getBoundingClientRect());
+        target.set(ndc.x, ndc.y);
+        return target;
     }
 
     updatePlaneRotation(rot) {

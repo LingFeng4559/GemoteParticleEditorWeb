@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { projectedToClient } from './ViewportCoordinates.js';
 
 class SelectionManager {
     constructor(sceneManager, sceneSync) {
@@ -25,8 +26,7 @@ class SelectionManager {
 
     pickGroupUnderCursor(event) {
         const mouse = this.sceneManager.mouse;
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        this.sceneManager.updatePointerFromEvent(event, mouse);
         this.sceneManager.raycaster.setFromCamera(mouse, this.sceneManager.camera);
 
         const meshes = [];
@@ -60,8 +60,7 @@ class SelectionManager {
 
     getSelectedIdsHitByRay(event, idsToCheck) {
         const mouse = this.sceneManager.mouse;
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        this.sceneManager.updatePointerFromEvent(event, mouse);
         this.sceneManager.raycaster.setFromCamera(mouse, this.sceneManager.camera);
 
         const ray = this.sceneManager.raycaster.ray;
@@ -165,8 +164,7 @@ class SelectionManager {
         if (!this.dragPlane || !this.dragStartOnPlane) return;
 
         const mouse = this.sceneManager.mouse;
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        this.sceneManager.updatePointerFromEvent(event, mouse);
         this.sceneManager.raycaster.setFromCamera(mouse, this.sceneManager.camera);
 
         const curr = new THREE.Vector3();
@@ -273,14 +271,10 @@ class SelectionManager {
 
     worldToScreen(worldVec3) {
         const camera = this.sceneManager.camera;
-        const renderer = this.sceneManager.renderer;
-        if (!camera || !renderer) return null;
-        const width = renderer.domElement.clientWidth || window.innerWidth;
-        const height = renderer.domElement.clientHeight || window.innerHeight;
+        const canvas = this.sceneManager.canvas;
+        if (!camera || !canvas) return null;
         const projected = worldVec3.clone().project(camera);
-        const x = (projected.x + 1) / 2 * width;
-        const y = (1 - projected.y) / 2 * height;
-        return { x, y };
+        return projectedToClient(projected.x, projected.y, canvas.getBoundingClientRect());
     }
 
     // === 私有方法 ===
@@ -291,8 +285,7 @@ class SelectionManager {
         this.dragPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(camDir, center);
 
         const mouse = this.sceneManager.mouse;
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        this.sceneManager.updatePointerFromEvent(event, mouse);
         this.sceneManager.raycaster.setFromCamera(mouse, this.sceneManager.camera);
 
         const startOnPlane = new THREE.Vector3();
