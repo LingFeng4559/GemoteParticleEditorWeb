@@ -27,7 +27,7 @@ class App {
 
         this.stateManager = new StateManager();
         this.sceneManager = new ThreeScene(this.canvas);
-        this.workspaceShell = new WorkspaceShell(this.stateManager);
+        this.workspaceShell = new WorkspaceShell(this.stateManager, this.sceneManager);
         this.uiManager = new UIManager(this.stateManager);
         this.projectManager = new ProjectManager(this.stateManager);
         this.localStorageManager = new LocalStorageManager(this.stateManager);
@@ -54,6 +54,7 @@ class App {
         this.setupEventListeners();
         console.log('[App] 正在讀取本地儲存...');
         this.initLocalStorage();
+        requestAnimationFrame(() => document.body.classList.remove('app-loading'));
         console.log('[App] 初始化完成。');
     }
 

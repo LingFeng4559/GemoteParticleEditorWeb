@@ -81,6 +81,9 @@ class TimelinePanel {
                 </fieldset>
             </div>`;
         document.body.appendChild(this.root);
+        this.controlsRoot = this.root.querySelector('[data-role="editor"]');
+        const animationInspector = document.querySelector('[data-inspector-slot="animation"]');
+        if (animationInspector) animationInspector.appendChild(this.controlsRoot);
         const collapseButton = this.root.querySelector('[data-action="collapse"]');
         const syncResponsiveState = () => {
             const mobileExpanded = window.matchMedia('(max-width: 720px)').matches && !this.root.classList.contains('is-collapsed');
@@ -105,22 +108,22 @@ class TimelinePanel {
         this.root.querySelector('[data-role="scrubber"]').addEventListener('input', event => this.stateManager.setTimelineTick(event.target.value));
         this.root.querySelector('[data-role="tick"]').addEventListener('input', event => this.stateManager.setTimelineTick(event.target.value));
         this.root.querySelector('[data-role="duration"]').addEventListener('change', event => this.stateManager.setTimelineDuration(event.target.value));
-        this.root.querySelectorAll('[data-transform]').forEach(input => {
+        this.controlsRoot.querySelectorAll('[data-transform]').forEach(input => {
             input.addEventListener('input', () => this.scheduleCommit('transform'));
             input.addEventListener('change', () => this.commitTransform());
         });
-        this.root.querySelectorAll('[data-spin]').forEach(input => {
+        this.controlsRoot.querySelectorAll('[data-spin]').forEach(input => {
             input.addEventListener('input', () => this.scheduleCommit('spin'));
             input.addEventListener('change', () => this.commitSpin());
         });
-        this.root.querySelectorAll('[data-transform-action]').forEach(button => button.addEventListener('click', () => this.handleTransformAction(button.dataset.transformAction)));
-        this.root.querySelectorAll('[data-key-action]').forEach(button => button.addEventListener('click', () => this.handleKeyAction(button.dataset.keyAction)));
-        this.root.querySelectorAll('[data-timing]').forEach(input => input.addEventListener('change', () => this.commitTiming()));
-        this.root.querySelectorAll('[data-orbit]').forEach(input => {
+        this.controlsRoot.querySelectorAll('[data-transform-action]').forEach(button => button.addEventListener('click', () => this.handleTransformAction(button.dataset.transformAction)));
+        this.controlsRoot.querySelectorAll('[data-key-action]').forEach(button => button.addEventListener('click', () => this.handleKeyAction(button.dataset.keyAction)));
+        this.controlsRoot.querySelectorAll('[data-timing]').forEach(input => input.addEventListener('change', () => this.commitTiming()));
+        this.controlsRoot.querySelectorAll('[data-orbit]').forEach(input => {
             input.addEventListener('input', () => this.scheduleCommit('orbit'));
             input.addEventListener('change', () => this.commitOrbit());
         });
-        this.root.querySelectorAll('[data-preset]').forEach(button => button.addEventListener('click', () => this.addPreset(button.dataset.preset)));
+        this.controlsRoot.querySelectorAll('[data-preset]').forEach(button => button.addEventListener('click', () => this.addPreset(button.dataset.preset)));
     }
 
     scheduleCommit(kind) {
@@ -169,7 +172,7 @@ class TimelinePanel {
     commitTiming() {
         const layer = this.selectedLayer();
         if (!layer) return;
-        const read = key => this.root.querySelector(`[data-timing="${key}"]`).value;
+        const read = key => this.controlsRoot.querySelector(`[data-timing="${key}"]`).value;
         this.stateManager.updateLayerAnimation(layer.id, { timing: {
             startTick: Math.max(0, Number(read('startTick')) || 0), duration: Math.max(1, Number(read('duration')) || 1),
             loop: Math.max(1, Math.floor(Number(read('loop')) || 1)), loopMode: read('loopMode')
@@ -179,7 +182,7 @@ class TimelinePanel {
     commitOrbit() {
         const layer = this.selectedLayer();
         if (!layer) return;
-        const read = key => this.root.querySelector(`[data-orbit="${key}"]`);
+        const read = key => this.controlsRoot.querySelector(`[data-orbit="${key}"]`);
         const current = layer.modifiers?.find(item => item.type === 'orbit');
         const modifier = buildOrbitModifier(current, {
             enabled: read('enabled').checked, axis: read('axis').value, radius: read('radius').value,
@@ -202,7 +205,7 @@ class TimelinePanel {
         const layer = this.selectedLayer();
         if (!layer) return;
         const values = {};
-        this.root.querySelectorAll('[data-transform]').forEach(input => {
+        this.controlsRoot.querySelectorAll('[data-transform]').forEach(input => {
             values[input.dataset.transform] = input.value;
         });
         const transform = buildTransformFromValues(layer.transform, values);
@@ -212,7 +215,7 @@ class TimelinePanel {
     commitSpin() {
         const layer = this.selectedLayer();
         if (!layer) return;
-        const read = key => this.root.querySelector(`[data-spin="${key}"]`);
+        const read = key => this.controlsRoot.querySelector(`[data-spin="${key}"]`);
         const current = layer.modifiers?.find(item => item.type === 'spin');
         const modifier = buildSpinModifier(current, {
             enabled: read('enabled').checked, axis: read('axis').value,
@@ -227,7 +230,7 @@ class TimelinePanel {
     update(state) {
         const layer = state.drawingGroups.find(item => item.id === state.selectedGroup?.id);
         this.root.querySelector('[data-role="selection"]').textContent = layer ? `編輯：${layer.name}` : '請選取圖層';
-        this.root.querySelector('[data-role="editor"]').style.opacity = layer ? '1' : '.45';
+        this.controlsRoot.style.opacity = layer ? '1' : '.45';
         this.root.querySelector('[data-role="scrubber"]').max = state.timelineDuration;
         this.root.querySelector('[data-role="scrubber"]').value = state.timelineTick;
         this.root.querySelector('[data-role="tick"]').max = state.timelineDuration;
@@ -237,28 +240,28 @@ class TimelinePanel {
         this.renderTracks(layer, state);
         if (!layer) return;
         const transform = normalizeTransform(layer.transform);
-        this.root.querySelectorAll('[data-transform]').forEach(input => {
+        this.controlsRoot.querySelectorAll('[data-transform]').forEach(input => {
             if (document.activeElement === input || this.commitTimers.has('transform')) return;
             const [group, key] = input.dataset.transform.split('.'); input.value = transform[group][key];
         });
         const spin = layer.modifiers?.find(item => item.type === 'spin');
         const set = (key, value) => {
-            const input = this.root.querySelector(`[data-spin="${key}"]`);
+            const input = this.controlsRoot.querySelector(`[data-spin="${key}"]`);
             if (document.activeElement === input || this.commitTimers.has('spin')) return;
             if (input.type === 'checkbox') input.checked = !!value; else input.value = value;
         };
         set('enabled', spin?.enabled); set('axis', spin?.axis || 'Y'); set('from', spin?.from ?? 0); set('to', spin?.to ?? 360);
         set('startTick', spin?.startTick ?? 0); set('duration', spin?.duration ?? state.timelineDuration); set('easing', spin?.easing || 'linear');
         const timing = layer.timing || {};
-        this.root.querySelectorAll('[data-timing]').forEach(input => {
+        this.controlsRoot.querySelectorAll('[data-timing]').forEach(input => {
             if (document.activeElement === input) return;
             input.value = timing[input.dataset.timing] ?? (input.dataset.timing === 'loopMode' ? 'once' : input.dataset.timing === 'loop' ? 1 : input.dataset.timing === 'duration' ? state.timelineDuration : 0);
         });
         const keyCount = (layer.tracks || []).reduce((sum, track) => sum + (track.keyframes?.length || 0), 0);
-        this.root.querySelector('[data-role="key-count"]').textContent = `${keyCount} keys`;
+        this.controlsRoot.querySelector('[data-role="key-count"]').textContent = `${keyCount} keys`;
         const orbit = layer.modifiers?.find(item => item.type === 'orbit');
         const setOrbit = (key, value) => {
-            const input = this.root.querySelector(`[data-orbit="${key}"]`);
+            const input = this.controlsRoot.querySelector(`[data-orbit="${key}"]`);
             if (document.activeElement === input || this.commitTimers.has('orbit')) return;
             if (input.type === 'checkbox') input.checked = !!value; else input.value = value;
         };

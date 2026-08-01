@@ -1,6 +1,7 @@
 class WorkspaceShell {
-    constructor(stateManager) {
+    constructor(stateManager, sceneManager) {
         this.stateManager = stateManager;
+        this.sceneManager = sceneManager;
         this.workspace = 'draw';
         this.build();
         this.rehomeLegacySections();
@@ -43,13 +44,24 @@ class WorkspaceShell {
             <aside id="inspector-dock" class="editor-dock" aria-label="屬性面板">
                 <div class="inspector-header"><div><small>INSPECTOR</small><strong data-role="selection-name">未選取圖層</strong></div><button data-command="pin" title="固定 Inspector">◇</button></div>
                 <div class="inspector-context" data-role="selection-context"><span class="context-icon">◇</span><div><strong>選取一個圖層</strong><p>從 Hierarchy 或 Viewport 選取內容後，在這裡編輯屬性與動畫。</p></div></div>
-                <div class="inspector-scroll"></div>
+                <div class="inspector-scroll"><div class="inspector-animation-slot" data-inspector-slot="animation"></div></div>
             </aside>
             <div id="viewport-toolbar" aria-label="視窗工具列">
                 <span data-role="mode">相機模式</span><span class="toolbar-separator"></span>
                 <button data-command="frame" title="聚焦選取 F">聚焦</button>
                 <button data-command="grid" class="active">網格</button>
-                <button data-command="character">Steve</button>
+                <button data-command="character" class="active">Steve</button>
+            </div>
+            <div id="preview-hud" aria-label="預覽控制">
+                <button data-preview-action="restart">↺ 重新播放</button>
+                <span>循環預覽</span>
+                <span data-role="preview-particles">0 粒子</span>
+                <span data-role="preview-tick">Tick 0 / 80</span>
+            </div>
+            <div id="export-workflow" aria-label="匯出流程">
+                <div><span>1</span><strong>驗證</strong><small>檢查圖層與指令預算</small></div>
+                <div><span>2</span><strong>最佳化</strong><small>選擇品質與取樣</small></div>
+                <div><span>3</span><strong>輸出</strong><small>下載或複製 YML</small></div>
             </div>
             <footer id="workspace-statusbar">
                 <span data-role="status-selection">沒有選取項目</span>
@@ -72,14 +84,21 @@ class WorkspaceShell {
         take('drawing-tools', tools);
         take('layers', hierarchy);
         take('image-particles', assets);
-        ['particle-settings', 'mirror-tools', 'reference-character', 'project-management', 'actions-output']
-            .forEach(name => take(name, inspector));
+        const workspaceSections = {
+            'particle-settings': 'draw', 'mirror-tools': 'draw',
+            'reference-character': 'draw', 'project-management': 'export',
+            'actions-output': 'export'
+        };
+        Object.entries(workspaceSections).forEach(([name, workspace]) => {
+            const section = take(name, inspector);
+            if (section) section.dataset.inspectorWorkspace = workspace;
+        });
         document.querySelector('#panel-header')?.remove();
         document.querySelector('#ui-panel')?.classList.add('workspace-source-empty');
     }
 
     bind() {
-        document.querySelectorAll('[data-workspace]').forEach(button => button.addEventListener('click', () => this.setWorkspace(button.dataset.workspace)));
+        document.querySelectorAll('.workspace-switcher [data-workspace]').forEach(button => button.addEventListener('click', () => this.setWorkspace(button.dataset.workspace)));
         document.querySelectorAll('[data-left-tab]').forEach(button => button.addEventListener('click', () => this.setLeftTab(button.dataset.leftTab)));
         document.querySelector('#workspace-topbar').addEventListener('click', event => {
             const command = event.target.closest('[data-command]')?.dataset.command;
@@ -88,18 +107,43 @@ class WorkspaceShell {
             if (targets[command]) document.querySelector(targets[command])?.click();
             if (command === 'preview') this.stateManager.setTimelinePlaying(!this.stateManager.timelinePlaying);
         });
+        document.querySelector('[data-preview-action="restart"]').addEventListener('click', () => {
+            this.stateManager.setTimelineTick(0);
+            this.stateManager.setTimelinePlaying(true);
+        });
+        document.querySelector('#viewport-toolbar [data-command="frame"]').addEventListener('click', () => this.framePreview());
+        document.querySelector('#viewport-toolbar [data-command="grid"]').addEventListener('click', event => {
+            const visible = !this.sceneManager.gridHelper.visible;
+            this.sceneManager.gridHelper.visible = visible;
+            event.currentTarget.classList.toggle('active', visible);
+        });
+        document.querySelector('#viewport-toolbar [data-command="character"]').addEventListener('click', event => {
+            const visible = !this.sceneManager.characterGroup.visible;
+            this.sceneManager.characterGroup.visible = visible;
+            event.currentTarget.classList.toggle('active', visible);
+        });
     }
 
     setWorkspace(workspace) {
+        const previousWorkspace = this.workspace;
         this.workspace = workspace;
         document.body.dataset.workspace = workspace;
-        document.querySelectorAll('[data-workspace]').forEach(button => button.classList.toggle('active', button.dataset.workspace === workspace));
+        window.dispatchEvent(new CustomEvent('workspaceChanged', { detail: { workspace, previousWorkspace } }));
+        document.querySelectorAll('.workspace-switcher [data-workspace]').forEach(button => button.classList.toggle('active', button.dataset.workspace === workspace));
         this.setTimelineCollapsed(workspace !== 'animate');
         if (workspace === 'export') document.querySelector('[data-section="actions-output"]')?.classList.remove('collapsed');
         if (workspace === 'draw') this.setLeftTab('tools');
         if (workspace === 'animate') this.setLeftTab('hierarchy');
-        if (workspace === 'export') requestAnimationFrame(() => document.querySelector('[data-section="actions-output"]')?.scrollIntoView({ block: 'start' }));
-        if (workspace === 'preview') this.stateManager.setTimelinePlaying(true);
+        if (workspace === 'export') requestAnimationFrame(() => {
+            document.querySelector('#btn-estimate-export')?.click();
+            document.querySelector('[data-section="actions-output"]')?.scrollIntoView({ block: 'start' });
+        });
+        else document.querySelector('#inspector-dock .inspector-scroll')?.scrollTo({ top: 0 });
+        if (workspace === 'preview') {
+            this.framePreview();
+            this.stateManager.setTimelinePlaying(true);
+        }
+        if (previousWorkspace === 'preview' && workspace !== 'preview') this.stateManager.setTimelinePlaying(false);
     }
 
     setTimelineCollapsed(collapsed) {
@@ -120,6 +164,7 @@ class WorkspaceShell {
 
     update(state) {
         const selected = (state.drawingGroups || []).find(layer => layer.id === state.selectedGroup?.id);
+        document.body.classList.toggle('has-layer-selection', !!selected);
         const particleCount = (state.particlePoints || []).length + (state.drawingGroups || []).reduce((sum, layer) => sum + (layer.particles?.length || 0), 0);
         document.querySelector('[data-role="project-name"]').textContent = state.projectName || '未命名專案';
         document.querySelector('[data-role="selection-name"]').textContent = selected?.name || '未選取圖層';
@@ -131,6 +176,8 @@ class WorkspaceShell {
         document.querySelector('[data-role="status-selection"]').textContent = selected ? `選取：${selected.name}` : '沒有選取項目';
         document.querySelector('[data-role="status-particles"]').textContent = `${particleCount.toLocaleString()} 個粒子`;
         document.querySelector('[data-role="status-time"]').textContent = `Tick ${Math.round(state.timelineTick || 0)} / ${state.timelineDuration || 80}`;
+        document.querySelector('[data-role="preview-particles"]').textContent = `${particleCount.toLocaleString()} 粒子`;
+        document.querySelector('[data-role="preview-tick"]').textContent = `Tick ${Math.round(state.timelineTick || 0)} / ${state.timelineDuration || 80}`;
         document.querySelector('[data-role="mode"]').textContent = `${this.modeLabel(state.mode)}模式`;
         const preview = document.querySelector('[data-command="preview"]');
         preview.classList.toggle('active', !!state.timelinePlaying);
@@ -139,6 +186,28 @@ class WorkspaceShell {
 
     modeLabel(mode) {
         return ({ camera: '相機', select: '選取', point: '單點', brush: '筆刷', eraser: '橡皮擦', rectangle: '方形', circle: '圓形' })[mode] || '相機';
+    }
+
+    framePreview() {
+        if (!this.sceneManager) return;
+        const state = this.stateManager.getState();
+        const selectedId = state.selectedGroup?.id;
+        const selected = (state.drawingGroups || []).find(layer => layer.id === selectedId);
+        const points = selected?.particles?.length
+            ? selected.particles
+            : [...(state.particlePoints || []), ...(state.drawingGroups || []).flatMap(layer => layer.particles || [])];
+        if (!points.length) return;
+        const bounds = points.reduce((result, point) => ({
+            minX: Math.min(result.minX, Number(point.x) || 0), maxX: Math.max(result.maxX, Number(point.x) || 0),
+            minY: Math.min(result.minY, Number(point.y) || 0), maxY: Math.max(result.maxY, Number(point.y) || 0),
+            minZ: Math.min(result.minZ, Number(point.z) || 0), maxZ: Math.max(result.maxZ, Number(point.z) || 0)
+        }), { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity, minZ: Infinity, maxZ: -Infinity });
+        const center = { x: (bounds.minX + bounds.maxX) / 2, y: (bounds.minY + bounds.maxY) / 2, z: (bounds.minZ + bounds.maxZ) / 2 };
+        const span = Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY, bounds.maxZ - bounds.minZ, 1);
+        const distance = Math.max(2.8, span * 2.4);
+        this.sceneManager.camera.position.set(center.x + distance, center.y + distance * .72, center.z + distance);
+        this.sceneManager.controls.target.set(center.x, center.y, center.z);
+        this.sceneManager.controls.update();
     }
 }
 

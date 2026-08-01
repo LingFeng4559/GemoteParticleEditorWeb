@@ -71,13 +71,13 @@ class LayerPanel {
             this.stateManager.moveLayer(sourceId, layer.id, isLayerContainer(layer) ? 'inside' : 'before');
         });
 
-        const expand = this.createButton('expand', hasChildren ? (layer.expanded ? '▾' : '▸') : '·', '展開或收合');
+        const expand = this.createButton('expand', hasChildren ? (layer.expanded ? '▾' : '▸') : '·', '展開或收合群組');
         expand.disabled = !hasChildren;
         row.appendChild(expand);
 
         const name = this.createButton('select', '', '選取圖層');
         name.className = 'layer-name-btn';
-        name.textContent = `${isLayerContainer(layer) ? '📁' : '◈'} ${layer.name}`;
+        name.textContent = `${isLayerContainer(layer) ? '▣' : '◆'} ${layer.name}`;
         name.addEventListener('dblclick', event => {
             event.stopPropagation();
             const renamed = window.prompt('圖層名稱', layer.name);
@@ -85,10 +85,10 @@ class LayerPanel {
         });
         row.appendChild(name);
 
-        row.appendChild(this.createButton('visible', layer.visible ? '👁' : '－', '3D 預覽顯示', layer.visible));
-        row.appendChild(this.createButton('export', layer.exportEnabled ? '輸' : '略', '是否匯出', layer.exportEnabled));
-        row.appendChild(this.createButton('lock', layer.locked ? '🔒' : '🔓', '鎖定圖層', layer.locked));
-        row.appendChild(this.createButton('solo', 'S', '單獨顯示', layer.solo));
+        row.appendChild(this.createButton('visible', layer.visible ? '●' : '○', layer.visible ? '在 Viewport 隱藏' : '在 Viewport 顯示', layer.visible));
+        row.appendChild(this.createButton('export', layer.exportEnabled ? 'E' : '—', layer.exportEnabled ? '從匯出中排除' : '加入匯出', layer.exportEnabled));
+        row.appendChild(this.createButton('lock', layer.locked ? 'L' : 'U', layer.locked ? '解除鎖定' : '鎖定圖層', layer.locked));
+        row.appendChild(this.createButton('solo', 'S', '只顯示此圖層', layer.solo));
         row.appendChild(this.createButton('delete', '×', '刪除圖層'));
 
         row.querySelectorAll('[data-layer-action]').forEach(button => {
@@ -104,6 +104,13 @@ class LayerPanel {
     update(state) {
         if (!this.container) return;
         const layers = [...state.drawingGroups].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        const signature = `${state.selectedGroup?.id || ''}|${layers.map(layer => [
+            layer.id, layer.parentId, layer.order, layer.name, layer.type,
+            layer.visible, layer.exportEnabled, layer.locked, layer.solo,
+            layer.expanded, layer.particles?.length || 0
+        ].join(':')).join('|')}`;
+        if (signature === this.lastRenderSignature) return;
+        this.lastRenderSignature = signature;
         const children = new Map();
         for (const layer of layers) {
             if (!children.has(layer.parentId)) children.set(layer.parentId, []);

@@ -15,6 +15,10 @@ class TransformGizmoController {
         });
         this.controls.addEventListener('objectChange', () => this.commitPreview());
         this.buildToolbar();
+        window.addEventListener('workspaceChanged', event => {
+            this.previewMode = ['preview', 'export'].includes(event.detail?.workspace);
+            this.sync(this.stateManager.getState());
+        });
     }
 
     buildToolbar() {
@@ -39,7 +43,7 @@ class TransformGizmoController {
     sync(state) {
         if (this.dragging) return;
         const layer = state.drawingGroups.find(item => item.id === state.selectedGroup?.id);
-        if (!layer || isLayerContainer(layer) || layer.locked) { this.layerId = null; this.controls.detach(); this.toolbar.classList.remove('visible'); return; }
+        if (this.previewMode || !layer || isLayerContainer(layer) || layer.locked) { this.layerId = null; this.controls.detach(); this.toolbar.classList.remove('visible'); return; }
         this.layerId = layer.id; const transform = normalizeTransform(layer.transform);
         this.target.position.set(transform.position.x + transform.pivot.x, transform.position.y + transform.pivot.y, transform.position.z + transform.pivot.z);
         this.target.rotation.set(THREE.MathUtils.degToRad(transform.rotation.x), THREE.MathUtils.degToRad(transform.rotation.y), THREE.MathUtils.degToRad(transform.rotation.z));
