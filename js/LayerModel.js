@@ -1,4 +1,4 @@
-import { normalizeModifiers, normalizeTiming, normalizeTransform } from './animation/AnimationModel.js';
+import { normalizeModifiers, normalizeTiming, normalizeTracks, normalizeTransform } from './animation/AnimationModel.js';
 
 export const LAYER_DEFAULTS = Object.freeze({
     parentId: null,
@@ -30,7 +30,7 @@ export function normalizeLayer(layer, index = 0) {
         order: Number.isFinite(Number(layer?.order)) ? Number(layer.order) : index,
         transform: normalizeTransform(layer?.transform),
         timing: normalizeTiming(layer?.timing),
-        tracks: Array.isArray(layer?.tracks) ? layer.tracks.map(track => ({ ...track })) : [],
+        tracks: normalizeTracks(layer?.tracks),
         modifiers: normalizeModifiers(layer?.modifiers)
     };
 }

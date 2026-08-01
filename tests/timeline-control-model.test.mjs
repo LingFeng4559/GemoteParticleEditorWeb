@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildSpinModifier, buildTransformFromValues, calculateParticleCenter, replaceModifierByType } from '../js/animation/TimelineControlModel.js';
+import { buildOrbitModifier, buildSpinModifier, buildTransformFromValues, calculateParticleCenter, removeKeyframesAtTick, replaceModifierByType, upsertTransformKeyframes } from '../js/animation/TimelineControlModel.js';
 
 test('timeline controls preserve negative and multi-turn spin angles', () => {
     const negative = buildSpinModifier(null, { enabled: true, axis: 'y', from: '0', to: '-360', duration: '80' }, () => 'spin-a');
@@ -28,4 +28,21 @@ test('replacing spin leaves other modifier types intact', () => {
 test('particle center can be used as a deterministic pivot', () => {
     assert.deepEqual(calculateParticleCenter([{ x: -2, y: 1, z: 4 }, { x: 2, y: 3, z: 0 }]), { x: 0, y: 2, z: 2 });
     assert.deepEqual(calculateParticleCenter([]), { x: 0, y: 0, z: 0 });
+});
+
+test('transform keyframes are inserted, replaced and removed at a tick', () => {
+    let sequence = 0;
+    const ids = () => `id-${sequence++}`;
+    let tracks = upsertTransformKeyframes([], { rotation: { x: 0, y: 90, z: 0 } }, 20, ids);
+    assert.equal(tracks.length, 9);
+    assert.equal(tracks.find(track => track.property === 'rotation.y').keyframes[0].value, 90);
+    tracks = upsertTransformKeyframes(tracks, { rotation: { x: 0, y: -360, z: 0 } }, 20, ids);
+    assert.equal(tracks.find(track => track.property === 'rotation.y').keyframes.length, 1);
+    assert.equal(tracks.find(track => track.property === 'rotation.y').keyframes[0].value, -360);
+    assert.ok(removeKeyframesAtTick(tracks, 20).every(track => track.keyframes.length === 0));
+});
+
+test('orbit controls preserve direction, radius and path facing', () => {
+    const orbit = buildOrbitModifier(null, { enabled: true, axis: 'z', radius: '2.5', to: '-720', facePath: true }, () => 'orbit-1');
+    assert.equal(orbit.axis, 'Z'); assert.equal(orbit.radius, 2.5); assert.equal(orbit.to, -720); assert.equal(orbit.facePath, true);
 });

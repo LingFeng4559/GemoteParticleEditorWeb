@@ -6,14 +6,14 @@ export function bakeParticleEvents(state, { maxCommands = 12000 } = {}) {
         !isLayerContainer(layer) && isLayerEffectivelyExported(layer.id, state.drawingGroups) && layer.particles?.length
     );
     const duration = Math.max(1, Math.round(Number(state.timelineDuration) || 80));
-    const animatedLayers = layers.filter(layer => layer.modifiers?.some(modifier => modifier.enabled !== false));
+    const animatedLayers = layers.filter(layer => layer.modifiers?.some(modifier => modifier.enabled !== false) || layer.tracks?.some(track => track.enabled !== false));
     const idealCommands = animatedLayers.reduce((sum, layer) => sum + layer.particles.length * (duration + 1), 0);
     const bakeStep = Math.max(1, Math.ceil(idealCommands / Math.max(1, maxCommands)));
     const events = (state.particlePoints || []).map(point => ({ tick: 0, point, layerId: null }));
 
     for (const layer of layers) {
-        const hasModifiers = layer.modifiers?.some(modifier => modifier.enabled !== false);
-        if (hasModifiers) {
+        const hasTimelineAnimation = layer.modifiers?.some(modifier => modifier.enabled !== false) || layer.tracks?.some(track => track.enabled !== false);
+        if (hasTimelineAnimation) {
             for (let tick = 0; tick <= duration; tick += bakeStep) {
                 for (const point of evaluateLayerParticles(layer, state.drawingGroups, tick)) events.push({ tick, point, layerId: layer.id });
             }

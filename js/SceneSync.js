@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import DrawingGroup from './DrawingGroup.js';
 import { isLayerContainer, isLayerEffectivelyVisible } from './LayerModel.js';
-import { evaluateLayerParticles } from './animation/AnimationModel.js';
+import { evaluateLayerParticles, evaluateLayerVisibility } from './animation/AnimationModel.js';
 
 class SceneSync {
     constructor(stateManager, sceneManager) {
@@ -81,7 +81,7 @@ class SceneSync {
         for (const groupData of state.drawingGroups) {
             if (isLayerContainer(groupData)) continue;
             const evaluatedGroupData = { ...groupData, particles: evaluateLayerParticles(groupData, state.drawingGroups, state.timelineTick) };
-            const shouldBeVisible = isLayerEffectivelyVisible(groupData.id, state.drawingGroups);
+            const shouldBeVisible = isLayerEffectivelyVisible(groupData.id, state.drawingGroups) && evaluateLayerVisibility(groupData, state.timelineTick);
             if (!renderedGroupIds.has(groupData.id)) {
                 const group = DrawingGroup.fromJSON(evaluatedGroupData);
 

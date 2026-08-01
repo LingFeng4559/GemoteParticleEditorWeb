@@ -31,6 +31,44 @@ export function replaceModifierByType(modifiers, modifier) {
     return [...(modifiers || []).filter(item => item.type !== modifier.type), modifier];
 }
 
+export function buildOrbitModifier(current, values = {}, idFactory = () => crypto.randomUUID()) {
+    return normalizeModifier({
+        id: current?.id || idFactory(), type: 'orbit', name: current?.name || '公轉',
+        enabled: values.enabled ?? current?.enabled ?? false,
+        axis: values.axis ?? current?.axis ?? 'Y', center: values.center ?? current?.center,
+        radius: finite(values.radius, current?.radius ?? 1), from: finite(values.from, current?.from ?? 0),
+        to: finite(values.to, current?.to ?? 360), startTick: finite(values.startTick, current?.startTick ?? 0),
+        duration: finite(values.duration, current?.duration ?? 80), easing: values.easing ?? current?.easing ?? 'linear',
+        facePath: values.facePath ?? current?.facePath ?? false
+    });
+}
+
+export function upsertTransformKeyframes(tracks, transformValue, tick, idFactory = () => crypto.randomUUID()) {
+    const transform = normalizeTransform(transformValue);
+    const next = (tracks || []).map(track => ({ ...track, keyframes: [...(track.keyframes || [])] }));
+    for (const group of ['position', 'rotation', 'scale']) {
+        for (const key of ['x', 'y', 'z']) {
+            const property = `${group}.${key}`;
+            let track = next.find(item => item.property === property);
+            if (!track) {
+                track = { id: idFactory(), property, enabled: true, keyframes: [] };
+                next.push(track);
+            }
+            const frame = { id: idFactory(), tick: Math.max(0, finite(tick)), value: transform[group][key], interpolation: 'linear' };
+            const index = track.keyframes.findIndex(item => item.tick === frame.tick);
+            if (index >= 0) track.keyframes[index] = { ...track.keyframes[index], ...frame, id: track.keyframes[index].id };
+            else track.keyframes.push(frame);
+            track.keyframes.sort((a, b) => a.tick - b.tick);
+        }
+    }
+    return next;
+}
+
+export function removeKeyframesAtTick(tracks, tick) {
+    const target = finite(tick);
+    return (tracks || []).map(track => ({ ...track, keyframes: (track.keyframes || []).filter(frame => frame.tick !== target) }));
+}
+
 export function calculateParticleCenter(particles) {
     if (!Array.isArray(particles) || particles.length === 0) return { x: 0, y: 0, z: 0 };
     const total = particles.reduce((sum, point) => ({

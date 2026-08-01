@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import {
     evaluateLayerParticles,
     evaluateLayerTransform,
+    evaluateLayerVisibility,
+    evaluateTrack,
+    mapLayerTick,
     transformPoint
 } from '../js/animation/AnimationModel.js';
 
@@ -42,4 +45,29 @@ test('child transform is evaluated before parent transform', () => {
     const point = evaluateLayerParticles(child, [parent, child], 0)[0];
     close(point.x, 5);
     close(point.y, 1);
+});
+
+test('keyframe tracks interpolate without normalizing multi-turn rotations', () => {
+    const track = { property: 'rotation.y', keyframes: [{ tick: 0, value: 0 }, { tick: 80, value: 720 }] };
+    assert.equal(evaluateTrack(track, 20), 180);
+    assert.equal(evaluateLayerTransform({ tracks: [track], timing: { duration: 80, loopMode: 'once' } }, 60).rotation.y, 540);
+});
+
+test('once, repeat and ping-pong map ticks deterministically', () => {
+    assert.equal(mapLayerTick(120, { duration: 80, loopMode: 'once' }), 80);
+    assert.equal(mapLayerTick(100, { duration: 80, loop: 2, loopMode: 'repeat' }), 20);
+    assert.equal(mapLayerTick(100, { duration: 80, loop: 2, loopMode: 'ping-pong' }), 60);
+});
+
+test('visibility step tracks and orbit modifiers are evaluated', () => {
+    const layer = {
+        visible: true,
+        timing: { duration: 80, loopMode: 'once' },
+        tracks: [{ property: 'visible', keyframes: [{ tick: 0, value: true, interpolation: 'step' }, { tick: 20, value: false }] }],
+        modifiers: [{ type: 'orbit', axis: 'Y', radius: 2, from: 0, to: 360, duration: 80 }]
+    };
+    assert.equal(evaluateLayerVisibility(layer, 30), false);
+    const atQuarter = evaluateLayerTransform(layer, 20);
+    close(atQuarter.position.x, 0);
+    close(atQuarter.position.z, 2);
 });

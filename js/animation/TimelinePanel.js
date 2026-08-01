@@ -1,5 +1,5 @@
 import { normalizeTransform } from './AnimationModel.js';
-import { buildSpinModifier, buildTransformFromValues, calculateParticleCenter, replaceModifierByType } from './TimelineControlModel.js';
+import { buildOrbitModifier, buildSpinModifier, buildTransformFromValues, calculateParticleCenter, removeKeyframesAtTick, replaceModifierByType, upsertTransformKeyframes } from './TimelineControlModel.js';
 
 class TimelinePanel {
     constructor(stateManager) {
@@ -41,6 +41,15 @@ class TimelinePanel {
                     <button type="button" data-transform-action="paste">貼上</button>
                     <button type="button" data-transform-action="reset">重設</button>
                 </fieldset>
+                <fieldset><legend>關鍵影格 / Timing</legend>
+                    <button type="button" data-key-action="add">＋目前 Transform</button>
+                    <button type="button" data-key-action="remove">刪除目前 tick</button>
+                    <span data-role="key-count">0 keys</span>
+                    <label>開始 <input data-timing="startTick" type="number" min="0" value="0"></label>
+                    <label>長度 <input data-timing="duration" type="number" min="1" value="80"></label>
+                    <label>循環 <input data-timing="loop" type="number" min="1" value="1"></label>
+                    <label>模式 <select data-timing="loopMode"><option value="once">Once</option><option value="repeat">Repeat</option><option value="ping-pong">Ping-pong</option></select></label>
+                </fieldset>
                 <fieldset><legend>Spin 旋轉修改器</legend>
                     <label><input data-spin="enabled" type="checkbox"> 啟用</label>
                     <label>軸 <select data-spin="axis"><option>X</option><option selected>Y</option><option>Z</option></select></label>
@@ -49,6 +58,16 @@ class TimelinePanel {
                     <label>開始 tick <input data-spin="startTick" type="number" min="0" value="0"></label>
                     <label>長度 <input data-spin="duration" type="number" min="1" value="80"></label>
                     <label>緩動 <select data-spin="easing"><option value="linear">線性</option><option value="ease-in-out">慢入慢出</option><option value="ease-in">慢入</option><option value="ease-out">慢出</option></select></label>
+                </fieldset>
+                <fieldset><legend>Orbit 公轉修改器</legend>
+                    <label><input data-orbit="enabled" type="checkbox"> 啟用</label>
+                    <label>軸 <select data-orbit="axis"><option>X</option><option selected>Y</option><option>Z</option></select></label>
+                    <label>半徑 <input data-orbit="radius" type="number" min="0" step="0.1" value="1"></label>
+                    <label>起始° <input data-orbit="from" type="number" value="0"></label>
+                    <label>結束° <input data-orbit="to" type="number" value="360"></label>
+                    <label>開始 <input data-orbit="startTick" type="number" min="0" value="0"></label>
+                    <label>長度 <input data-orbit="duration" type="number" min="1" value="80"></label>
+                    <label><input data-orbit="facePath" type="checkbox"> 朝向路徑</label>
                 </fieldset>
             </div>`;
         const style = document.createElement('style');
@@ -69,13 +88,19 @@ class TimelinePanel {
             input.addEventListener('change', () => this.commitSpin());
         });
         this.root.querySelectorAll('[data-transform-action]').forEach(button => button.addEventListener('click', () => this.handleTransformAction(button.dataset.transformAction)));
+        this.root.querySelectorAll('[data-key-action]').forEach(button => button.addEventListener('click', () => this.handleKeyAction(button.dataset.keyAction)));
+        this.root.querySelectorAll('[data-timing]').forEach(input => input.addEventListener('change', () => this.commitTiming()));
+        this.root.querySelectorAll('[data-orbit]').forEach(input => {
+            input.addEventListener('input', () => this.scheduleCommit('orbit'));
+            input.addEventListener('change', () => this.commitOrbit());
+        });
     }
 
     scheduleCommit(kind) {
         clearTimeout(this.commitTimers.get(kind));
         this.commitTimers.set(kind, setTimeout(() => {
             this.commitTimers.delete(kind);
-            kind === 'spin' ? this.commitSpin() : this.commitTransform();
+            if (kind === 'spin') this.commitSpin(); else if (kind === 'orbit') this.commitOrbit(); else this.commitTransform();
         }, 120));
     }
 
@@ -103,6 +128,38 @@ class TimelinePanel {
             transform.pivot = calculateParticleCenter(layer.particles);
             this.stateManager.updateLayerAnimation(layer.id, { transform });
         }
+    }
+
+    handleKeyAction(action) {
+        const layer = this.selectedLayer();
+        if (!layer) return;
+        const tracks = action === 'add'
+            ? upsertTransformKeyframes(layer.tracks, layer.transform, this.stateManager.timelineTick)
+            : removeKeyframesAtTick(layer.tracks, this.stateManager.timelineTick);
+        this.stateManager.updateLayerAnimation(layer.id, { tracks });
+    }
+
+    commitTiming() {
+        const layer = this.selectedLayer();
+        if (!layer) return;
+        const read = key => this.root.querySelector(`[data-timing="${key}"]`).value;
+        this.stateManager.updateLayerAnimation(layer.id, { timing: {
+            startTick: Math.max(0, Number(read('startTick')) || 0), duration: Math.max(1, Number(read('duration')) || 1),
+            loop: Math.max(1, Math.floor(Number(read('loop')) || 1)), loopMode: read('loopMode')
+        } });
+    }
+
+    commitOrbit() {
+        const layer = this.selectedLayer();
+        if (!layer) return;
+        const read = key => this.root.querySelector(`[data-orbit="${key}"]`);
+        const current = layer.modifiers?.find(item => item.type === 'orbit');
+        const modifier = buildOrbitModifier(current, {
+            enabled: read('enabled').checked, axis: read('axis').value, radius: read('radius').value,
+            from: read('from').value, to: read('to').value, startTick: read('startTick').value,
+            duration: read('duration').value, facePath: read('facePath').checked
+        });
+        this.stateManager.updateLayerAnimation(layer.id, { modifiers: replaceModifierByType(layer.modifiers, modifier) });
     }
 
     commitTransform() {
@@ -155,6 +212,22 @@ class TimelinePanel {
         };
         set('enabled', spin?.enabled); set('axis', spin?.axis || 'Y'); set('from', spin?.from ?? 0); set('to', spin?.to ?? 360);
         set('startTick', spin?.startTick ?? 0); set('duration', spin?.duration ?? state.timelineDuration); set('easing', spin?.easing || 'linear');
+        const timing = layer.timing || {};
+        this.root.querySelectorAll('[data-timing]').forEach(input => {
+            if (document.activeElement === input) return;
+            input.value = timing[input.dataset.timing] ?? (input.dataset.timing === 'loopMode' ? 'once' : input.dataset.timing === 'loop' ? 1 : input.dataset.timing === 'duration' ? state.timelineDuration : 0);
+        });
+        const keyCount = (layer.tracks || []).reduce((sum, track) => sum + (track.keyframes?.length || 0), 0);
+        this.root.querySelector('[data-role="key-count"]').textContent = `${keyCount} keys`;
+        const orbit = layer.modifiers?.find(item => item.type === 'orbit');
+        const setOrbit = (key, value) => {
+            const input = this.root.querySelector(`[data-orbit="${key}"]`);
+            if (document.activeElement === input || this.commitTimers.has('orbit')) return;
+            if (input.type === 'checkbox') input.checked = !!value; else input.value = value;
+        };
+        setOrbit('enabled', orbit?.enabled); setOrbit('axis', orbit?.axis || 'Y'); setOrbit('radius', orbit?.radius ?? 1);
+        setOrbit('from', orbit?.from ?? 0); setOrbit('to', orbit?.to ?? 360); setOrbit('startTick', orbit?.startTick ?? 0);
+        setOrbit('duration', orbit?.duration ?? state.timelineDuration); setOrbit('facePath', orbit?.facePath);
     }
 
     animate(time) {
