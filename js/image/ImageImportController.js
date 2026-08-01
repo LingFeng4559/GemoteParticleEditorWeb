@@ -24,40 +24,23 @@ class ImageImportController {
             .forEach(element => element?.addEventListener('input', () => this.updatePreviewTransform()));
         const canvas = this.sceneManager.canvas;
         canvas?.addEventListener('mousedown', event => {
-            if (!this.previewMesh) return;
+            if (!this.previewMesh || event.button !== 0) return;
             event.preventDefault();
             event.stopImmediatePropagation();
-            if (event.button === 2) {
-                this.isScaling = true;
-                this.scaleDragStartX = event.clientX;
-                this.scaleDragStartWidth = Math.max(0.1, Number(this.elements.worldWidth?.value) || 4);
-            } else if (event.button === 0) {
-                this.isPlacing = true;
-                this.updatePositionFromPointer(event);
-            }
+            this.isPlacing = true;
+            this.updatePositionFromPointer(event);
         }, { capture: true });
         canvas?.addEventListener('mousemove', event => {
-            if ((!this.isPlacing && !this.isScaling) || !this.previewMesh) return;
+            if (!this.isPlacing || !this.previewMesh) return;
             event.preventDefault();
             event.stopImmediatePropagation();
-            if (this.isScaling) {
-                const factor = Math.exp((event.clientX - this.scaleDragStartX) / 180);
-                this.setPreviewWidth(this.scaleDragStartWidth * factor);
-            } else {
-                this.updatePositionFromPointer(event);
-            }
+            this.updatePositionFromPointer(event);
         }, { capture: true });
         window.addEventListener('mouseup', event => {
-            if (!this.isPlacing && !this.isScaling) return;
+            if (!this.isPlacing) return;
             event.preventDefault();
             event.stopImmediatePropagation();
             this.isPlacing = false;
-            this.isScaling = false;
-        }, { capture: true });
-        canvas?.addEventListener('contextmenu', event => {
-            if (!this.previewMesh) return;
-            event.preventDefault();
-            event.stopImmediatePropagation();
         }, { capture: true });
         canvas?.addEventListener('wheel', event => {
             if (!this.previewMesh) return;
@@ -168,7 +151,7 @@ class ImageImportController {
         this.elements.placement.hidden = false;
         this.elements.positionX.value = '0';
         this.elements.positionY.value = '0';
-        this.setStatus('步驟 2：左鍵選擇 XZ 位置；右鍵拖曳調整圖片大小。');
+        this.setStatus('步驟 2：左鍵選擇 XZ 位置；以數值調整圖片寬度。');
         await this.createPreviewMesh();
     }
 
@@ -294,7 +277,6 @@ class ImageImportController {
         this.currentFile = null;
         this.sourceSize = null;
         this.isPlacing = false;
-        this.isScaling = false;
         if (this.elements.placement) this.elements.placement.hidden = true;
         if (this.elements.imageInput) this.elements.imageInput.value = '';
         if (this.elements.folderInput) this.elements.folderInput.value = '';
