@@ -37,7 +37,9 @@ class ProjectManager {
                     particles: group.particles || [],
                     isAnimated: !!group.isAnimated,
                     bounds: group.bounds,
-                    position: group.position
+                    position: group.position,
+                    source: group.source,
+                    imageSettings: group.imageSettings
                 };
                 if (group.tickInterval !== undefined && group.tickInterval !== null) {
                     out.tickInterval = group.tickInterval;

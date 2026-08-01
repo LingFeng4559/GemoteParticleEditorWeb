@@ -22,6 +22,8 @@ class DrawingGroup {
         this.expanded = config.expanded !== false;
         this.order = Number.isFinite(Number(config.order)) ? Number(config.order) : 0;
         this.layerColor = config.layerColor || '#64748b';
+        this.source = config.source || null;
+        this.imageSettings = config.imageSettings || null;
 
         // 邊界框
         this.bounds = config.bounds || this.calculateBounds();
@@ -279,6 +281,8 @@ class DrawingGroup {
             expanded: this.expanded,
             order: this.order,
             layerColor: this.layerColor,
+            source: this.source,
+            imageSettings: this.imageSettings,
             particles: this.particles.map(p => ({
                 id: p.id,
                 x: p.x,
@@ -313,6 +317,8 @@ class DrawingGroup {
             expanded: json.expanded,
             order: json.order,
             layerColor: json.layerColor,
+            source: json.source,
+            imageSettings: json.imageSettings,
             particles: json.particles || [],
             particleType: json.particleType,
             color: json.color,

@@ -3,6 +3,7 @@ import CodeGenerator from './CodeGenerator.js';
 import InlineEditor from './InlineEditor.js';
 import lang from './LanguageManager.js';
 import LayerPanel from './LayerPanel.js';
+import ImageImportController from './image/ImageImportController.js';
 
 class UIManager {
     constructor(stateManager) {
@@ -24,6 +25,7 @@ class UIManager {
         this.inlineEditor = new InlineEditor(this.stateManager, this);
         this.inlineEditor.setup();
         this.layerPanel = new LayerPanel(this.stateManager, this.layerTree, this.addLayerGroupBtn);
+        this.imageImportController = new ImageImportController(this.stateManager, this.imageImportElements);
     }
 
     initDOMElements() {
@@ -49,6 +51,19 @@ class UIManager {
         this.selectedGroupStatus = q('#selected-group-status');
         this.layerTree = q('#layer-tree');
         this.addLayerGroupBtn = q('#btn-add-layer-group');
+        this.imageImportElements = {
+            imageButton: q('#btn-import-images'),
+            folderButton: q('#btn-import-image-folder'),
+            imageInput: q('#image-file-input'),
+            folderInput: q('#image-folder-input'),
+            outputWidth: q('#image-output-width'),
+            alphaThreshold: q('#image-alpha-threshold'),
+            sampleStep: q('#image-sample-step'),
+            spacing: q('#image-particle-spacing'),
+            plane: q('#image-plane'),
+            colorMode: q('#image-color-mode'),
+            status: q('#image-import-status')
+        };
         
         this.drawingHeightSlider = q('#drawing-height');
         this.heightDisplay = q('#height-display');

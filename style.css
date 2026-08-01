@@ -885,6 +885,41 @@ input[type="range"]:hover::-webkit-slider-thumb { background-color: var(--primar
     cursor: pointer;
 }
 
+.image-import-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+    margin-top: 10px;
+}
+
+.image-import-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    color: #94a3b8;
+    font-size: 9px;
+}
+
+.image-import-grid input,
+.image-import-grid select {
+    width: 100%;
+    min-width: 0;
+}
+
+.image-import-status {
+    margin-top: 9px;
+    padding: 7px;
+    color: #94a3b8;
+    background: rgba(15, 23, 42, 0.55);
+    border-radius: 5px;
+    font-size: 9px;
+    line-height: 1.45;
+}
+
+.image-import-status[data-status="success"] { color: #86efac; }
+.image-import-status[data-status="warning"] { color: #fde68a; }
+.image-import-status[data-status="error"] { color: #fca5a5; }
+
 .layer-icon-btn:hover,
 .layer-icon-btn.active {
     color: #f8fafc;
