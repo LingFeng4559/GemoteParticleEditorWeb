@@ -1,4 +1,5 @@
 import lang from './LanguageManager.js';
+import { PROJECT_SCHEMA_VERSION } from './ProjectSchema.js';
 
 class ProjectManager {
     constructor(stateManager) {
@@ -10,7 +11,7 @@ class ProjectManager {
         return {
             name: state.currentProjectName,
             createdAt: new Date().toISOString(),
-            version: "2.1",
+            version: PROJECT_SCHEMA_VERSION,
             particles: state.particlePoints.map(point => ({
                 id: point.id,
                 x: point.x,
@@ -23,6 +24,16 @@ class ProjectManager {
                 const out = {
                     id: group.id,
                     type: group.type,
+                    layerKind: group.layerKind,
+                    name: group.name,
+                    parentId: group.parentId,
+                    visible: group.visible !== false,
+                    exportEnabled: group.exportEnabled !== false,
+                    locked: !!group.locked,
+                    solo: !!group.solo,
+                    expanded: group.expanded !== false,
+                    order: group.order,
+                    layerColor: group.layerColor,
                     particles: group.particles || [],
                     isAnimated: !!group.isAnimated,
                     bounds: group.bounds,
@@ -36,6 +47,7 @@ class ProjectManager {
             settings: {
                 drawingHeight: state.drawingHeight,
                 planeRotation: state.planeRotation,
+                planeOffset: state.planeOffset,
                 particleType: state.particleType,
                 particleColor: state.particleColor,
                 cameraSensitivity: state.cameraSensitivity,
@@ -47,7 +59,16 @@ class ProjectManager {
                 head: state.head,
                 horizontalMirrorEnabled: !!state.horizontalMirrorEnabled,
                 horizontalMirrorZEnabled: !!state.horizontalMirrorZEnabled,
-                verticalMirrorEnabled: !!state.verticalMirrorEnabled
+                verticalMirrorEnabled: !!state.verticalMirrorEnabled,
+                mirrorPivot: state.mirrorPivot,
+                pivotFollowsPlane: !!state.pivotFollowsPlane,
+                radialSymmetryEnabled: !!state.radialSymmetryEnabled,
+                radialSymmetryAxis: state.radialSymmetryAxis,
+                radialSymmetryMode: state.radialSymmetryMode,
+                radialSymmetryCount: state.radialSymmetryCount,
+                radialSymmetryOffset: state.radialSymmetryOffset,
+                particleDensity: state.particleDensity,
+                characterMode: state.characterMode
             }
         };
     }

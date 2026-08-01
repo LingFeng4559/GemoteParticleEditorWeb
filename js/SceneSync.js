@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import DrawingGroup from './DrawingGroup.js';
+import { isLayerContainer, isLayerEffectivelyVisible } from './LayerModel.js';
 
 class SceneSync {
     constructor(stateManager, sceneManager) {
@@ -12,11 +13,13 @@ class SceneSync {
 
     sync(state, { isDragging = false } = {}) {
         // 同步群組
-        const stateGroupIds = new Set(state.drawingGroups.map(g => g.id));
+        const stateGroupIds = new Set(state.drawingGroups.filter(g => !isLayerContainer(g)).map(g => g.id));
         const renderedGroupIds = new Set(this.groupObjectMap.keys());
 
         // 新增或更新群組
         for (const groupData of state.drawingGroups) {
+            if (isLayerContainer(groupData)) continue;
+            const shouldBeVisible = isLayerEffectivelyVisible(groupData.id, state.drawingGroups);
             if (!renderedGroupIds.has(groupData.id)) {
                 const group = DrawingGroup.fromJSON(groupData);
 
@@ -30,8 +33,14 @@ class SceneSync {
                 });
 
                 this.groupObjectMap.set(groupData.id, group);
+                group.visible = shouldBeVisible;
+                group.locked = !!groupData.locked;
+                group.meshes.forEach(mesh => { mesh.visible = shouldBeVisible; });
             } else {
                 const group = this.groupObjectMap.get(groupData.id);
+                group.visible = shouldBeVisible;
+                group.locked = !!groupData.locked;
+                group.meshes.forEach(mesh => { mesh.visible = shouldBeVisible; });
 
                 // 拖動期間不覆寫本地位置
                 if (isDragging && group) {
@@ -59,6 +68,7 @@ class SceneSync {
                         });
                         group.meshes.push(sphereMesh);
                     });
+                    group.meshes.forEach(mesh => { mesh.visible = shouldBeVisible; });
                 }
                 if (group.particles.length === groupData.particles.length) {
                     group.particles = groupData.particles;

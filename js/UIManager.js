@@ -2,6 +2,7 @@ import FloatingPalette from './FloatingPalette.js';
 import CodeGenerator from './CodeGenerator.js';
 import InlineEditor from './InlineEditor.js';
 import lang from './LanguageManager.js';
+import LayerPanel from './LayerPanel.js';
 
 class UIManager {
     constructor(stateManager) {
@@ -22,6 +23,7 @@ class UIManager {
         this.codeGenerator = new CodeGenerator(this.stateManager, this.codeOutput, this.copyCodeBtn);
         this.inlineEditor = new InlineEditor(this.stateManager, this);
         this.inlineEditor.setup();
+        this.layerPanel = new LayerPanel(this.stateManager, this.layerTree, this.addLayerGroupBtn);
     }
 
     initDOMElements() {
@@ -45,6 +47,8 @@ class UIManager {
         this.animationPreviewBtn = q('#btn-animation-preview');
         this.toggleGroupAnimationBtn = q('#btn-toggle-group-animation');
         this.selectedGroupStatus = q('#selected-group-status');
+        this.layerTree = q('#layer-tree');
+        this.addLayerGroupBtn = q('#btn-add-layer-group');
         
         this.drawingHeightSlider = q('#drawing-height');
         this.heightDisplay = q('#height-display');
@@ -426,6 +430,7 @@ class UIManager {
         setVal(this.projectNameInput, state.currentProjectName);
         setVal(this.skillIdInput, state.skillId);
         setTxt(this.currentProjectDisplay, state.hasUnsavedChanges ? `${state.currentProjectName} *` : state.currentProjectName);
+        this.layerPanel?.update(state);
     }
 
     drawDensityPreview(density) {

@@ -1,3 +1,6 @@
+import { migrateProject } from './ProjectSchema.js';
+import { getLayerDescendantIds, normalizeLayer, normalizeLayers } from './LayerModel.js';
+
 class StateManager {
     constructor() {
         this.particlePoints = [];
@@ -373,15 +376,44 @@ class StateManager {
     }
 
     addGroup(groupData) {
-        this.drawingGroups.push(groupData);
+        this.drawingGroups.push(normalizeLayer(groupData, this.drawingGroups.length));
         this.setUnsavedChanges(true);
         this.notify();
+    }
+
+    addLayerGroup({ name = '新群組', parentId = null } = {}) {
+        const group = normalizeLayer({
+            id: crypto.randomUUID(),
+            type: 'layer-group',
+            layerKind: 'group',
+            name,
+            parentId,
+            particles: []
+        }, this.drawingGroups.length);
+        this.drawingGroups.push(group);
+        this.setUnsavedChanges(true);
+        this.notify();
+        return group;
+    }
+
+    updateLayerState(layerId, updates) {
+        const layer = this.drawingGroups.find(group => group.id === layerId);
+        if (!layer) return false;
+        const allowed = ['name', 'parentId', 'visible', 'exportEnabled', 'locked', 'solo', 'expanded', 'order', 'layerColor'];
+        for (const key of allowed) {
+            if (Object.prototype.hasOwnProperty.call(updates, key)) layer[key] = updates[key];
+        }
+        this.drawingGroups = normalizeLayers(this.drawingGroups);
+        this.setUnsavedChanges(true);
+        this.notify();
+        return true;
     }
 
     removeGroup(groupId) {
         const index = this.drawingGroups.findIndex(g => g.id === groupId);
         if (index !== -1) {
-            this.drawingGroups.splice(index, 1);
+            const idsToRemove = new Set([groupId, ...getLayerDescendantIds(groupId, this.drawingGroups)]);
+            this.drawingGroups = this.drawingGroups.filter(group => !idsToRemove.has(group.id));
             if (this.selectedGroup && this.selectedGroup.id === groupId) {
                 this.selectedGroup = null;
             }
@@ -400,6 +432,7 @@ class StateManager {
     }
 
     loadProject(projectData) {
+        projectData = migrateProject(projectData);
         this.clearPoints();
         this.currentProjectName = projectData.name || '未命名專案';
         this.lastPointPosition = null;
@@ -461,7 +494,7 @@ class StateManager {
 
         if (projectData.groups) {
             const legacyDefault = !!(projectData.settings && projectData.settings.animationEnabled);
-            this.drawingGroups = projectData.groups.map(g => {
+            this.drawingGroups = normalizeLayers(projectData.groups.map(g => {
                 const gt = parseFloat(g.tickInterval);
                 const out = {
                     ...g,
@@ -474,7 +507,7 @@ class StateManager {
                     delete out.tickInterval;
                 }
                 return out;
-            });
+            }));
         }
 
         this.setUnsavedChanges(false);

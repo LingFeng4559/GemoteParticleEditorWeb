@@ -31,6 +31,7 @@ class SelectionManager {
 
         const meshes = [];
         for (const group of this.sceneSync.groupObjectMap.values()) {
+            if (group.locked || group.visible === false) continue;
             if (group.meshes && group.meshes.length > 0) {
                 meshes.push(...group.meshes);
             }

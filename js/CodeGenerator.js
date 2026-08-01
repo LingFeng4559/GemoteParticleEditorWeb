@@ -1,4 +1,5 @@
 import lang from './LanguageManager.js';
+import { isLayerContainer, isLayerEffectivelyExported } from './LayerModel.js';
 
 class CodeGenerator {
     constructor(stateManager, codeOutput, copyCodeBtn) {
@@ -42,6 +43,7 @@ class CodeGenerator {
         state.particlePoints.forEach(point => staticParticles.push(point));
 
         state.drawingGroups.forEach(group => {
+            if (isLayerContainer(group) || !isLayerEffectivelyExported(group.id, state.drawingGroups)) return;
             if (!group.particles || group.particles.length === 0) return;
             const animatedGroup = state.animationEnabled && !!group.isAnimated;
             if (animatedGroup) {

@@ -12,6 +12,16 @@ class DrawingGroup {
         this.particleType = config.particleType || 'redstone';
         this.color = config.color || '#ff0000';
         this.isAnimated = !!config.isAnimated;
+        this.layerKind = config.layerKind || (config.type === 'layer-group' ? 'group' : 'content');
+        this.name = config.name || (this.layerKind === 'group' ? '新群組' : '未命名圖層');
+        this.parentId = config.parentId || null;
+        this.visible = config.visible !== false;
+        this.exportEnabled = config.exportEnabled !== false;
+        this.locked = !!config.locked;
+        this.solo = !!config.solo;
+        this.expanded = config.expanded !== false;
+        this.order = Number.isFinite(Number(config.order)) ? Number(config.order) : 0;
+        this.layerColor = config.layerColor || '#64748b';
 
         // 邊界框
         this.bounds = config.bounds || this.calculateBounds();
@@ -259,6 +269,16 @@ class DrawingGroup {
         return {
             id: this.id,
             type: this.type,
+            layerKind: this.layerKind,
+            name: this.name,
+            parentId: this.parentId,
+            visible: this.visible,
+            exportEnabled: this.exportEnabled,
+            locked: this.locked,
+            solo: this.solo,
+            expanded: this.expanded,
+            order: this.order,
+            layerColor: this.layerColor,
             particles: this.particles.map(p => ({
                 id: p.id,
                 x: p.x,
@@ -283,6 +303,16 @@ class DrawingGroup {
         return new DrawingGroup({
             id: json.id,
             type: json.type,
+            layerKind: json.layerKind,
+            name: json.name,
+            parentId: json.parentId,
+            visible: json.visible,
+            exportEnabled: json.exportEnabled,
+            locked: json.locked,
+            solo: json.solo,
+            expanded: json.expanded,
+            order: json.order,
+            layerColor: json.layerColor,
             particles: json.particles || [],
             particleType: json.particleType,
             color: json.color,
