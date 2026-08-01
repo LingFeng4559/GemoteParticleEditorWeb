@@ -1,5 +1,13 @@
 # GemoteWeb 檔案用途說明 (FILE_MAP)
 
+## 新增架構（3.0）
+
+- `js/animation/`：Transform、關鍵影格、Timing、修改器與動畫烘焙。
+- `js/TransformGizmoController.js`：Three.js 3D Transform Gizmo。
+- `js/image/`：圖片轉粒子、Worker、IndexedDB 素材與縮圖。
+- `js/yaml/EditorAnnotations.js`：YML 註解、checksum 與反解析。
+- `tests/fixtures/ab-counter-rotation.gemote3d`：A/B 反向 360° 驗收專案。
+
 本文件詳述專案中各個檔案與資料夾的功能，便於開發與維護。
 
 ## 📂 根目錄檔案

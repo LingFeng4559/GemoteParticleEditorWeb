@@ -81,6 +81,12 @@
 6.  **匯出**：點擊「生成程式碼」，將下載的 `.yml` 放入伺服器 `plugins/GEmote/emotes/` 目錄。
 7.  **套用**：在伺服器輸入 `/gemote reload`，接著輸入 `/gemote FireRing` 即可展示！
 
+## 進階圖層與動畫工作流
+
+圖片可轉成粒子圖層並保存到瀏覽器素材庫。圖層支援巢狀群組、顯示、Solo、鎖定、匯出開關與拖放排序。時間軸可編輯 Position、Rotation、Scale、Pivot、關鍵影格、Once/Repeat/Ping-pong、Spin、Orbit、Wave 與固定種子 Noise。3D Gizmo 支援移動、旋轉、縮放及 World／Local 模式。
+
+匯出前可估算指令數、檔案大小與取樣步距；YML 的 `#@gemote-*` 註解可恢復圖層與動畫。`Ctrl+Z` 復原，`Ctrl+Shift+Z` 或 `Ctrl+Y` 重做，最多 50 步。
+
 ## 📄 授權說明
 
 本項目採開源釋出。關於 GEmote 插件本身，請參考其原作者的授權協議。

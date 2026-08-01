@@ -33,6 +33,16 @@ export function normalizeTiming(value = {}) {
 }
 
 export function normalizeModifier(value = {}, index = 0) {
+    if (value.type === 'wave') {
+        return { id: value.id || `wave-${index}`, type: 'wave', name: value.name || '波動', enabled: value.enabled !== false,
+            axis: ['X', 'Y', 'Z'].includes(String(value.axis).toUpperCase()) ? String(value.axis).toUpperCase() : 'Y',
+            amplitude: number(value.amplitude, 1), cycles: number(value.cycles, 1), phase: number(value.phase, 0),
+            startTick: Math.max(0, number(value.startTick, 0)), duration: Math.max(1, number(value.duration, 80)) };
+    }
+    if (value.type === 'noise') {
+        return { id: value.id || `noise-${index}`, type: 'noise', name: value.name || '抖動', enabled: value.enabled !== false,
+            amplitude: normalizeVector(value.amplitude, { x: 0.1, y: 0.1, z: 0.1 }), frequency: Math.max(0.01, number(value.frequency, 1)), seed: number(value.seed, 1) };
+    }
     if (value.type === 'orbit') {
         return {
             id: value.id || `orbit-${index}`,
@@ -133,8 +143,8 @@ export function evaluateLayerTransform(layer, tick = 0) {
     }
     for (const modifier of normalizeModifiers(layer?.modifiers)) {
         if (!modifier.enabled) continue;
-        const progress = ease((localTick - modifier.startTick) / modifier.duration, modifier.easing);
-        const angle = modifier.from + (modifier.to - modifier.from) * progress;
+        const progress = modifier.duration ? ease((localTick - modifier.startTick) / modifier.duration, modifier.easing) : 0;
+        const angle = modifier.from !== undefined ? modifier.from + (modifier.to - modifier.from) * progress : 0;
         if (modifier.type === 'spin') transform.rotation[modifier.axis.toLowerCase()] += angle;
         if (modifier.type === 'orbit') {
             const radians = angle * Math.PI / 180;
@@ -155,6 +165,20 @@ export function evaluateLayerTransform(layer, tick = 0) {
                 transform.position.z += c.z;
                 if (modifier.facePath) transform.rotation.z += angle;
             }
+        }
+        if (modifier.type === 'wave') {
+            const radians = (modifier.phase + progress * modifier.cycles * 360) * Math.PI / 180;
+            transform.position[modifier.axis.toLowerCase()] += Math.sin(radians) * modifier.amplitude;
+        }
+        if (modifier.type === 'noise') {
+            const sample = Math.floor(localTick * modifier.frequency) + modifier.seed;
+            const random = axis => {
+                const value = Math.sin(sample * 12.9898 + axis * 78.233) * 43758.5453;
+                return (value - Math.floor(value)) * 2 - 1;
+            };
+            transform.position.x += random(1) * modifier.amplitude.x;
+            transform.position.y += random(2) * modifier.amplitude.y;
+            transform.position.z += random(3) * modifier.amplitude.z;
         }
     }
     return transform;

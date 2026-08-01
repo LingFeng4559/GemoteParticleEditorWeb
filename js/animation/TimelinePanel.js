@@ -69,9 +69,15 @@ class TimelinePanel {
                     <label>長度 <input data-orbit="duration" type="number" min="1" value="80"></label>
                     <label><input data-orbit="facePath" type="checkbox"> 朝向路徑</label>
                 </fieldset>
+                <fieldset><legend>程序動畫</legend>
+                    <button type="button" data-preset="wave">加入上下波動</button>
+                    <button type="button" data-preset="noise">加入抖動</button>
+                    <button type="button" data-preset="counter-left">左旋 -360°</button>
+                    <button type="button" data-preset="counter-right">右旋 +360°</button>
+                </fieldset>
             </div>`;
         const style = document.createElement('style');
-        style.textContent = `.timeline-panel{position:fixed;left:12px;right:340px;bottom:12px;z-index:40;padding:10px 12px;border:1px solid #475569;border-radius:10px;background:rgba(15,23,42,.94);color:#e2e8f0;font:12px system-ui;box-shadow:0 8px 30px #0008}.timeline-head,.timeline-row{display:flex;align-items:center;gap:8px}.timeline-head{justify-content:space-between;margin-bottom:7px}.timeline-row [data-role=scrubber]{flex:1}.timeline-panel input[type=number]{width:62px;background:#0f172a;color:#fff;border:1px solid #475569;border-radius:4px;padding:3px}.timeline-panel button,.timeline-panel select{background:#1e293b;color:#fff;border:1px solid #64748b;border-radius:4px;padding:3px 7px}.timeline-editor{display:flex;gap:8px;margin-top:8px}.timeline-editor fieldset{display:flex;align-items:center;gap:7px;border:1px solid #334155;border-radius:6px}.timeline-editor label{white-space:nowrap}@media(max-width:900px){.timeline-panel{right:12px}.timeline-editor{overflow-x:auto}}`;
+        style.textContent = `.timeline-panel{position:fixed;left:12px;right:340px;bottom:12px;z-index:40;padding:10px 12px;border:1px solid #475569;border-radius:10px;background:rgba(15,23,42,.94);color:#e2e8f0;font:12px system-ui;box-shadow:0 8px 30px #0008}.timeline-head,.timeline-row{display:flex;align-items:center;gap:8px}.timeline-head{justify-content:space-between;margin-bottom:7px}.timeline-row [data-role=scrubber]{flex:1}.timeline-panel input[type=number]{width:62px;background:#0f172a;color:#fff;border:1px solid #475569;border-radius:4px;padding:3px}.timeline-panel button,.timeline-panel select{background:#1e293b;color:#fff;border:1px solid #64748b;border-radius:4px;padding:3px 7px}.timeline-editor{display:grid;grid-template-columns:1fr;gap:6px;margin-top:8px;max-height:210px;overflow:auto}.timeline-editor fieldset{display:flex;flex-wrap:wrap;align-items:center;gap:7px;border:1px solid #334155;border-radius:6px}.timeline-editor label{white-space:nowrap}@media(max-width:900px){.timeline-panel{right:12px}}`;
         document.head.appendChild(style);
         document.body.appendChild(this.root);
         this.root.querySelector('[data-action="play"]').addEventListener('click', () => this.stateManager.setTimelinePlaying(!this.stateManager.timelinePlaying));
@@ -94,6 +100,7 @@ class TimelinePanel {
             input.addEventListener('input', () => this.scheduleCommit('orbit'));
             input.addEventListener('change', () => this.commitOrbit());
         });
+        this.root.querySelectorAll('[data-preset]').forEach(button => button.addEventListener('click', () => this.addPreset(button.dataset.preset)));
     }
 
     scheduleCommit(kind) {
@@ -160,6 +167,15 @@ class TimelinePanel {
             duration: read('duration').value, facePath: read('facePath').checked
         });
         this.stateManager.updateLayerAnimation(layer.id, { modifiers: replaceModifierByType(layer.modifiers, modifier) });
+    }
+
+    addPreset(preset) {
+        const layer = this.selectedLayer(); if (!layer) return;
+        let modifier;
+        if (preset === 'wave') modifier = { id: crypto.randomUUID(), type: 'wave', enabled: true, axis: 'Y', amplitude: 0.5, cycles: 2, phase: 0, startTick: 0, duration: this.stateManager.timelineDuration };
+        if (preset === 'noise') modifier = { id: crypto.randomUUID(), type: 'noise', enabled: true, amplitude: { x: 0.08, y: 0.08, z: 0.08 }, frequency: 0.5, seed: Date.now() % 10000 };
+        if (preset === 'counter-left' || preset === 'counter-right') modifier = { id: crypto.randomUUID(), type: 'spin', enabled: true, axis: 'Y', from: 0, to: preset === 'counter-left' ? -360 : 360, startTick: 0, duration: this.stateManager.timelineDuration, easing: 'linear' };
+        this.stateManager.updateLayerAnimation(layer.id, { modifiers: [...(layer.modifiers || []), modifier] });
     }
 
     commitTransform() {

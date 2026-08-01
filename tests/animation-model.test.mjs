@@ -71,3 +71,14 @@ test('visibility step tracks and orbit modifiers are evaluated', () => {
     close(atQuarter.position.x, 0);
     close(atQuarter.position.z, 2);
 });
+
+test('wave and seeded noise modifiers compose deterministically', () => {
+    const layer = { timing: { duration: 80, loopMode: 'once' }, modifiers: [
+        { type: 'wave', axis: 'Y', amplitude: 2, cycles: 1, duration: 80 },
+        { type: 'noise', amplitude: { x: 0.1, y: 0, z: 0 }, frequency: 1, seed: 42 }
+    ] };
+    const first = evaluateLayerTransform(layer, 20);
+    const second = evaluateLayerTransform(layer, 20);
+    close(first.position.y, 2);
+    close(first.position.x, second.position.x);
+});

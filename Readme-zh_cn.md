@@ -81,6 +81,10 @@
 6.  **导出**：点击“生成代码”，将下载的 `.yml` 放入服务器 `plugins/GEmote/emotes/` 目录。
 7.  **套用**：在服务器输入 `/gemote reload`，接着输入 `/gemote FireRing` 即可展示！
 
+## 高级图层与动画流程
+
+图片可转换为粒子图层并保存到浏览器素材库。时间轴支持 Transform、Pivot、关键帧、Once/Repeat/Ping-pong、Spin、Orbit、Wave 与固定种子 Noise。3D Gizmo 支持移动、旋转、缩放及 World／Local 模式。导出负载估算会显示指令数、文件大小与取样。Undo/Redo 最多保留 50 步。
+
 ## 📄 授权说明
 
 本项目采开源释出。关于 GEmote 插件本身，请参考其原作者的授权协议。

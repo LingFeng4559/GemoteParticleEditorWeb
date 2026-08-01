@@ -61,6 +61,10 @@ export default {
 
 
     undo: "上一步",
+    redo: "重做",
+    asset_library: "素材库",
+    export_quality: "导出质量",
+    estimate_export: "估算导出负载",
     clear_canvas: "清除画布",
     generate_code: "生成并下载",
     copy_code: "生成并复制",

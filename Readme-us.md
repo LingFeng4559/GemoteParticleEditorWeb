@@ -81,6 +81,10 @@ Due to browser security restrictions on JavaScript modules, you **cannot** simpl
 6.  **Exporting**: Click "Generate Code" and place the `.yml` in your server's `plugins/GEmote/emotes/` folder.
 7.  **Applying**: Run `/gemote reload` on the server, then `/gemote FireRing` to see it!
 
+## Advanced layer and animation workflow
+
+Images become editable layers and persist in the browser asset library. The timeline supports Transform, Pivot, keyframes, Once/Repeat/Ping-pong, Spin, Orbit, Wave, and seeded Noise. A 3D Gizmo offers translate, rotate, scale, World, and Local modes. Export load estimation reports commands, file size, and sampling. `#@gemote-*` YML comments restore editor data. Undo/redo retains 50 actions.
+
 ## 📄 License
 
 This project is released as open-source. For the GEmote plugin itself, please refer to the original author's license agreement.
