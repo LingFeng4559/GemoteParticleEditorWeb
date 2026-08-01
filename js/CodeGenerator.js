@@ -1,5 +1,6 @@
 import lang from './LanguageManager.js';
-import { isLayerContainer, isLayerEffectivelyExported } from './LayerModel.js';
+import { buildEditorAnnotationLines, buildParticleAnnotation } from './yaml/EditorAnnotations.js';
+import { bakeParticleEvents } from './animation/AnimationBaker.js';
 
 class CodeGenerator {
     constructor(stateManager, codeOutput, copyCodeBtn) {
@@ -27,49 +28,18 @@ class CodeGenerator {
         lines.push('# Optional: Defines whether the emote is played from the player\'s head height');
         lines.push(`head: ${state.head}`);
         lines.push('');
+        lines.push(...buildEditorAnnotationLines(state));
+        lines.push('');
         lines.push('pattern:');
 
-        const byTick = new Map();
-        const staticParticles = [];
-        const quantize = t => Math.round(t);
-        const globalTick = parseFloat(state.animationTickInterval) || 1;
-        
-        const addToTick = (tick, point) => {
-            const key = quantize(tick);
-            if (!byTick.has(key)) byTick.set(key, []);
-            byTick.get(key).push(point);
-        };
-
-        state.particlePoints.forEach(point => staticParticles.push(point));
-
-        state.drawingGroups.forEach(group => {
-            if (isLayerContainer(group) || !isLayerEffectivelyExported(group.id, state.drawingGroups)) return;
-            if (!group.particles || group.particles.length === 0) return;
-            const animatedGroup = state.animationEnabled && !!group.isAnimated;
-            if (animatedGroup) {
-                const tickInterval = parseFloat(group.tickInterval) || globalTick;
-                group.particles.forEach((point, index) => {
-                    addToTick(index * tickInterval, point);
-                });
-            } else {
-                group.particles.forEach(point => staticParticles.push(point));
-            }
-        });
-
-        const ticks = Array.from(byTick.keys()).sort((a, b) => a - b);
-
-        staticParticles.forEach(point => {
-            lines.push(`- ${this.buildParticleString(point, 0)}`);
-        });
-
+        const baked = bakeParticleEvents(state);
+        if (baked.limited) lines.push(`  #@gemote-bake ${JSON.stringify({ step: baked.bakeStep, idealCommands: baked.idealCommands, limit: 12000 })}`);
         let lastTick = 0;
-        ticks.forEach((tick) => {
-            const delta = quantize(tick - lastTick);
-            const particlesAtTick = byTick.get(tick);
-            particlesAtTick.forEach((point, index) => {
-                const currentDelay = (index === 0) ? delta : 0;
-                lines.push(`- ${this.buildParticleString(point, currentDelay)}`);
-            });
+        baked.events.forEach((event, index) => {
+            const tick = Math.round(event.tick);
+            const delay = index === 0 || tick === lastTick ? 0 : Math.max(0, tick - lastTick);
+            lines.push(`  ${buildParticleAnnotation(event.layerId)}`);
+            lines.push(`- ${this.buildParticleString(event.point, delay)}`);
             lastTick = tick;
         });
 

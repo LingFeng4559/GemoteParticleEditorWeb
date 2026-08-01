@@ -1,5 +1,6 @@
 import lang from './LanguageManager.js';
 import { PROJECT_SCHEMA_VERSION } from './ProjectSchema.js';
+import { parseAnnotatedYml } from './yaml/EditorAnnotations.js';
 
 class ProjectManager {
     constructor(stateManager) {
@@ -122,7 +123,7 @@ class ProjectManager {
 
         const input = document.createElement('input');
         input.type = 'file';
-        input.accept = '.gemote3d,.mythic3d,.json';
+        input.accept = '.gemote3d,.mythic3d,.json,.yml,.yaml';
         input.onchange = (event) => {
             const file = event.target.files[0];
             if (!file) return;
@@ -130,7 +131,9 @@ class ProjectManager {
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
-                    const projectData = JSON.parse(e.target.result);
+                    const isYml = /\.ya?ml$/i.test(file.name);
+                    const projectData = isYml ? parseAnnotatedYml(e.target.result) : JSON.parse(e.target.result);
+                    if (isYml) projectData.name = file.name.replace(/\.ya?ml$/i, '');
                     this.stateManager.loadProject(projectData);
                     console.log(`專案 "${projectData.name}" 載入成功！`);
                 } catch (error) {
