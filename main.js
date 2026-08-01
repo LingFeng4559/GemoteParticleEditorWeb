@@ -28,7 +28,7 @@ class App {
         this.stateManager = new StateManager();
         this.sceneManager = new ThreeScene(this.canvas);
         this.workspaceShell = new WorkspaceShell(this.stateManager, this.sceneManager);
-        this.uiManager = new UIManager(this.stateManager);
+        this.uiManager = new UIManager(this.stateManager, this.sceneManager);
         this.projectManager = new ProjectManager(this.stateManager);
         this.localStorageManager = new LocalStorageManager(this.stateManager);
         this.cursorManager = new CursorManager(this.canvas);

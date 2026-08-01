@@ -55,7 +55,7 @@ export default {
     density_hint: "预览与实际绘制采用相同密度模型",
     density_spacing: "目标间距",
     density_preview_range: "预览范围",
-    reference_character: "参考人物模型 (Steve):",
+    reference_character: "参考人偶:",
     char_opaque: "100% 模式",
     char_ghost: "幽灵模式",
     char_hidden: "不显示",

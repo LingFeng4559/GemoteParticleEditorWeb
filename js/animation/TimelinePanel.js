@@ -262,7 +262,7 @@ class TimelinePanel {
     renderTracks(layer, state) {
         const root = this.root.querySelector('[data-role="tracks"]');
         if (!layer) {
-            root.innerHTML = '<div class="track-empty">從 Hierarchy 選取圖層，即可查看關鍵影格與修改器作用區間</div>';
+            root.innerHTML = '<div class="track-empty">從圖層面板選取圖層，即可查看關鍵影格與修改器作用區間</div>';
             return;
         }
         const duration = Math.max(1, Number(state.timelineDuration) || 80);

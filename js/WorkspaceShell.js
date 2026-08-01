@@ -34,7 +34,7 @@ class WorkspaceShell {
             <aside id="left-dock" class="editor-dock" aria-label="工具與場景結構">
                 <div class="dock-tabs" role="tablist">
                     <button role="tab" data-left-tab="tools" class="active">工具</button>
-                    <button role="tab" data-left-tab="hierarchy">Hierarchy</button>
+                    <button role="tab" data-left-tab="hierarchy">圖層</button>
                     <button role="tab" data-left-tab="assets">素材</button>
                 </div>
                 <div class="dock-pane active" data-left-pane="tools"></div>
@@ -43,14 +43,14 @@ class WorkspaceShell {
             </aside>
             <aside id="inspector-dock" class="editor-dock" aria-label="屬性面板">
                 <div class="inspector-header"><div><small>INSPECTOR</small><strong data-role="selection-name">未選取圖層</strong></div><button data-command="pin" title="固定 Inspector">◇</button></div>
-                <div class="inspector-context" data-role="selection-context"><span class="context-icon">◇</span><div><strong>選取一個圖層</strong><p>從 Hierarchy 或 Viewport 選取內容後，在這裡編輯屬性與動畫。</p></div></div>
+                <div class="inspector-context" data-role="selection-context"><span class="context-icon">◇</span><div><strong>選取一個圖層</strong><p>從圖層面板或 3D 視窗選取內容後，在這裡編輯屬性與動畫。</p></div></div>
                 <div class="inspector-scroll"><div class="inspector-animation-slot" data-inspector-slot="animation"></div></div>
             </aside>
             <div id="viewport-toolbar" aria-label="視窗工具列">
                 <span data-role="mode">相機模式</span><span class="toolbar-separator"></span>
                 <button data-command="frame" title="聚焦選取 F">聚焦</button>
                 <button data-command="grid" class="active" aria-pressed="true">網格</button>
-                <button data-command="character" class="active" aria-pressed="true">Steve</button>
+                <button data-command="character" class="active" aria-pressed="true">參考人偶</button>
             </div>
             <div id="quick-start" role="dialog" aria-modal="true" aria-labelledby="quick-start-title" aria-describedby="quick-start-description">
                 <button class="quick-start-close" data-start-action="dismiss" aria-label="關閉並開始創作" title="關閉並開始創作">×</button>
@@ -238,7 +238,7 @@ class WorkspaceShell {
             ? '<span class="context-icon">✎</span><div><strong>新筆畫設定</strong><p>下方粒子、鏡像與參考模型設定會套用到接下來的繪製。</p></div>'
             : selected
             ? `<span class="context-icon">${selected.type === 'group' ? '▣' : '◆'}</span><div><strong>${selected.type === 'group' ? '群組' : '粒子圖層'}</strong><p>${selected.particles?.length || 0} 個粒子 · ${selected.locked ? '已鎖定' : '可編輯'}</p></div>`
-            : '<span class="context-icon">◇</span><div><strong>選取一個圖層</strong><p>從 Hierarchy 或 Viewport 選取內容後，在這裡編輯屬性與動畫。</p></div>';
+            : '<span class="context-icon">◇</span><div><strong>選取一個圖層</strong><p>從圖層面板或 3D 視窗選取內容後，在這裡編輯屬性與動畫。</p></div>';
         document.querySelector('[data-role="status-selection"]').textContent = selected ? `選取：${selected.name}` : '沒有選取項目';
         document.querySelector('[data-role="status-particles"]').textContent = `${particleCount.toLocaleString()} 個粒子`;
         document.querySelector('[data-role="status-time"]').textContent = `Tick ${Math.round(state.timelineTick || 0)} / ${state.timelineDuration || 80}`;

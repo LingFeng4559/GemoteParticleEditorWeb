@@ -32,8 +32,12 @@ class SceneSync {
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
         geometry.computeBoundingSphere();
+        const imageSpacing = Number(groupData.imageSettings?.spacing);
+        const pointSize = groupData.type === 'image' && Number.isFinite(imageSpacing)
+            ? Math.max(0.001, Math.min(0.25, imageSpacing * 0.92))
+            : 0.13;
         const material = new THREE.PointsMaterial({
-            size: 0.13,
+            size: pointSize,
             sizeAttenuation: true,
             vertexColors: true,
             transparent: true,

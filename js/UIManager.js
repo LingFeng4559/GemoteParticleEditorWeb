@@ -7,8 +7,9 @@ import ImageImportController from './image/ImageImportController.js';
 import { getParticleSpacing, getPreviewAxisPositions } from './DensityModel.js';
 
 class UIManager {
-    constructor(stateManager) {
+    constructor(stateManager, sceneManager) {
         this.stateManager = stateManager;
+        this.sceneManager = sceneManager;
         this.initDOMElements();
         this.setupSubModules();
         this.setupEventListeners();
@@ -26,7 +27,7 @@ class UIManager {
         this.inlineEditor = new InlineEditor(this.stateManager, this);
         this.inlineEditor.setup();
         this.layerPanel = new LayerPanel(this.stateManager, this.layerTree, this.addLayerGroupBtn);
-        this.imageImportController = new ImageImportController(this.stateManager, this.imageImportElements);
+        this.imageImportController = new ImageImportController(this.stateManager, this.sceneManager, this.imageImportElements);
     }
 
     initDOMElements() {
@@ -60,10 +61,16 @@ class UIManager {
             outputWidth: q('#image-output-width'),
             alphaThreshold: q('#image-alpha-threshold'),
             sampleStep: q('#image-sample-step'),
-            spacing: q('#image-particle-spacing'),
-            plane: q('#image-plane'),
+            worldWidth: q('#image-world-width'),
             colorMode: q('#image-color-mode'),
-            status: q('#image-import-status')
+            status: q('#image-import-status'),
+            placement: q('#image-placement'),
+            thumbnail: q('#image-placement-thumbnail'),
+            placementName: q('#image-placement-name'),
+            positionX: q('#image-position-x'),
+            positionY: q('#image-position-y'),
+            confirmButton: q('#btn-confirm-image-conversion'),
+            cancelButton: q('#btn-cancel-image-placement')
         };
         
         this.drawingHeightSlider = q('#drawing-height');

@@ -39,9 +39,9 @@
             </div>
         </div>
 
-        <!-- 1. 參考人物模型 (Steve) -->
+        <!-- 1. 參考人偶 -->
         <div class="section" data-section="reference-character">
-            <h3 class="section-title"><span data-i18n="reference_character">參考人物模型 (Steve)</span> <span class="collapse-arrow">▾</span></h3>
+            <h3 class="section-title"><span data-i18n="reference_character">參考人偶</span> <span class="collapse-arrow">▾</span></h3>
             <div class="section-content">
                 <div class="control-group">
                     <div class="mode-switcher">
@@ -126,25 +126,33 @@
         <div class="section" data-section="image-particles">
             <h3 class="section-title"><span>圖片粒子</span> <span class="collapse-arrow">▾</span></h3>
             <div class="section-content">
-                <input id="image-file-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden>
+                <input id="image-file-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
                 <input id="image-folder-input" type="file" accept="image/*" webkitdirectory multiple hidden>
                 <div class="button-grid">
                     <button id="btn-import-images" class="primary-btn" type="button">載入圖片</button>
                     <button id="btn-import-image-folder" class="secondary-btn" type="button">載入資料夾</button>
                 </div>
                 <div class="image-import-grid">
-                    <label>最大寬度<input id="image-output-width" type="number" min="1" max="256" value="32"></label>
+                    <label>轉換寬度（0＝原圖）<input id="image-output-width" type="number" min="0" max="1024" value="0"></label>
                     <label>透明門檻<input id="image-alpha-threshold" type="number" min="0" max="255" value="16"></label>
                     <label>取樣間隔<input id="image-sample-step" type="number" min="1" max="16" value="1"></label>
-                    <label>粒子間距<input id="image-particle-spacing" type="number" min="0.01" max="10" step="0.01" value="0.125"></label>
-                    <label>放置平面
-                        <select id="image-plane"><option value="XY">XY</option><option value="YZ">YZ</option><option value="ZX">ZX</option></select>
-                    </label>
+                    <label>圖片寬度（格）<input id="image-world-width" type="number" min="0.1" max="100" step="0.1" value="4"></label>
                     <label>顏色模式
                         <select id="image-color-mode"><option value="source">原圖顏色</option><option value="single">目前粒子設定</option></select>
                     </label>
                 </div>
-                <div id="image-import-status" class="image-import-status">建議先以 32px 寬度測試，避免一次產生過多粒子。</div>
+                <div id="image-placement" class="image-placement" hidden>
+                    <div class="image-placement-header"><img id="image-placement-thumbnail" alt="待轉換圖片"><div><strong id="image-placement-name">尚未選擇圖片</strong><small>先校正位置與大小，再確認轉換</small></div></div>
+                    <div class="image-position-grid">
+                        <label>水平位置<input id="image-position-x" type="number" step="0.1" value="0"></label>
+                        <label>垂直位置<input id="image-position-y" type="number" step="0.1" value="0"></label>
+                    </div>
+                    <div class="image-placement-actions">
+                        <button id="btn-confirm-image-conversion" class="primary-btn" type="button">確認轉換粒子</button>
+                        <button id="btn-cancel-image-placement" class="secondary-btn" type="button">取消</button>
+                    </div>
+                </div>
+                <div id="image-import-status" class="image-import-status">步驟 1：載入圖片。圖片不會立即轉成粒子。</div>
             </div>
         </div>
 
