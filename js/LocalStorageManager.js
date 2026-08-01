@@ -69,7 +69,6 @@ class LocalStorageManager {
                         visible: g.visible,
                         exportEnabled: g.exportEnabled,
                         locked: g.locked,
-                        solo: g.solo,
                         expanded: g.expanded,
                         order: g.order,
                         layerColor: g.layerColor,

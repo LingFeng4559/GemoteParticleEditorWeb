@@ -27,6 +27,10 @@ const soloA = layers.map(layer => layer.id === 'a' ? { ...layer, solo: true } : 
 assert.equal(isLayerEffectivelyVisible('a', soloA), true);
 assert.equal(isLayerEffectivelyVisible('b', soloA), false);
 
+const hiddenSoloA = layers.map(layer => layer.id === 'a' ? { ...layer, visible: false, solo: true } : layer);
+assert.equal(isLayerEffectivelyVisible('a', hiddenSoloA), true);
+assert.equal(hiddenSoloA.find(layer => layer.id === 'a').visible, false);
+
 const orphan = normalizeLayers([{ id: 'x', parentId: 'missing' }]);
 assert.equal(orphan[0].parentId, null);
 

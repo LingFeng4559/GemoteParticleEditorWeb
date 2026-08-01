@@ -26,7 +26,7 @@ class LayerPanel {
         if (action === 'visible') this.stateManager.updateLayerState(layerId, { visible: !layer.visible });
         if (action === 'export') this.stateManager.updateLayerState(layerId, { exportEnabled: !layer.exportEnabled });
         if (action === 'lock') this.stateManager.updateLayerState(layerId, { locked: !layer.locked });
-        if (action === 'solo') this.stateManager.updateLayerState(layerId, { solo: !layer.solo });
+        if (action === 'solo') this.stateManager.toggleLayerSolo(layerId);
         if (action === 'rename') {
             const name = window.prompt('圖層名稱', layer.name);
             if (name?.trim()) this.stateManager.updateLayerState(layerId, { name: name.trim() });

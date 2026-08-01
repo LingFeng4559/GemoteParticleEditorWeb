@@ -31,7 +31,6 @@ class ProjectManager {
                     visible: group.visible !== false,
                     exportEnabled: group.exportEnabled !== false,
                     locked: !!group.locked,
-                    solo: !!group.solo,
                     expanded: group.expanded !== false,
                     order: group.order,
                     layerColor: group.layerColor,

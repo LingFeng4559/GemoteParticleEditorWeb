@@ -25,3 +25,24 @@ test('new edits clear redo history and history is bounded', () => {
     state.addPoint({ id: 'replacement', x: 0, y: 0, z: 0 });
     assert.equal(state.redo(), false);
 });
+
+test('solo is exclusive, reversible and cleared for newly added layers', () => {
+    const state = new StateManager();
+    state.addGroup({ id: 'a', type: 'image', particles: [{ id: 'pa', x: 0, y: 0, z: 0 }] });
+    state.addGroup({ id: 'b', type: 'image', particles: [{ id: 'pb', x: 1, y: 0, z: 0 }] });
+    state.toggleLayerSolo('a');
+    assert.deepEqual(state.drawingGroups.map(layer => layer.solo), [true, false]);
+    state.toggleLayerSolo('b');
+    assert.deepEqual(state.drawingGroups.map(layer => layer.solo), [false, true]);
+    state.toggleLayerSolo('b');
+    assert.deepEqual(state.drawingGroups.map(layer => layer.solo), [false, false]);
+    state.toggleLayerSolo('a');
+    state.addGroup({ id: 'c', type: 'image', particles: [{ id: 'pc', x: 2, y: 0, z: 0 }] });
+    assert.deepEqual(state.drawingGroups.map(layer => layer.solo), [false, false, false]);
+});
+
+test('loading a project clears persisted legacy solo flags', () => {
+    const state = new StateManager();
+    state.loadProject({ groups: [{ id: 'legacy', type: 'image', solo: true, particles: [] }] });
+    assert.equal(state.drawingGroups[0].solo, false);
+});

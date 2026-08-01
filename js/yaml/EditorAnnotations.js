@@ -13,7 +13,6 @@ const layerMetadata = layer => ({
     visible: layer.visible,
     exportEnabled: layer.exportEnabled,
     locked: layer.locked,
-    solo: layer.solo,
     expanded: layer.expanded,
     order: layer.order,
     layerColor: layer.layerColor,

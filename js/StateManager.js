@@ -463,13 +463,15 @@ class StateManager {
 
     addGroup(groupData) {
         this.captureHistory();
-        this.drawingGroups.push(normalizeLayer(groupData, this.drawingGroups.length));
+        this.drawingGroups.forEach(layer => { layer.solo = false; });
+        this.drawingGroups.push(normalizeLayer({ ...groupData, solo: false }, this.drawingGroups.length));
         this.setUnsavedChanges(true);
         this.notify();
     }
 
     addLayerGroup({ name = '新群組', parentId = null } = {}) {
         this.captureHistory();
+        this.drawingGroups.forEach(layer => { layer.solo = false; });
         const group = normalizeLayer({
             id: crypto.randomUUID(),
             type: 'layer-group',
@@ -488,12 +490,21 @@ class StateManager {
         const layer = this.drawingGroups.find(group => group.id === layerId);
         if (!layer) return false;
         this.captureHistory();
-        const allowed = ['name', 'parentId', 'visible', 'exportEnabled', 'locked', 'solo', 'expanded', 'order', 'layerColor'];
+        const allowed = ['name', 'parentId', 'visible', 'exportEnabled', 'locked', 'expanded', 'order', 'layerColor'];
         for (const key of allowed) {
             if (Object.prototype.hasOwnProperty.call(updates, key)) layer[key] = updates[key];
         }
         this.drawingGroups = normalizeLayers(this.drawingGroups);
         this.setUnsavedChanges(true);
+        this.notify();
+        return true;
+    }
+
+    toggleLayerSolo(layerId) {
+        const target = this.drawingGroups.find(layer => layer.id === layerId);
+        if (!target) return false;
+        const enable = !target.solo;
+        this.drawingGroups.forEach(layer => { layer.solo = enable && layer.id === layerId; });
         this.notify();
         return true;
     }
@@ -615,6 +626,7 @@ class StateManager {
                 const out = {
                     ...g,
                     id: g.id || crypto.randomUUID(),
+                    solo: false,
                     isAnimated: g.isAnimated === undefined ? legacyDefault : !!g.isAnimated
                 };
                 if (Number.isFinite(gt) && gt > 0) {

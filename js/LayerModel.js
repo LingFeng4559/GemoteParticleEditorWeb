@@ -80,16 +80,19 @@ export function getLayerDescendantIds(layerId, layers) {
 
 export function isLayerEffectivelyVisible(layerId, layers) {
     const layer = layers.find(item => item.id === layerId);
-    if (!layer || layer.visible === false) return false;
+    if (!layer) return false;
     const soloLayers = layers.filter(item => item.solo);
     if (soloLayers.length > 0) {
-        const allowed = soloLayers.some(solo =>
-            solo.id === layerId ||
-            getLayerDescendantIds(solo.id, layers).includes(layerId) ||
-            getLayerAncestors(solo.id, layers).some(ancestor => ancestor.id === layerId)
-        );
-        if (!allowed) return false;
+        const solo = soloLayers[0];
+        if (solo.id === layerId) return true;
+        const descendants = new Set(getLayerDescendantIds(solo.id, layers));
+        if (descendants.has(layerId)) {
+            return layer.visible !== false && getLayerAncestors(layerId, layers)
+                .every(ancestor => ancestor.id === solo.id || ancestor.visible !== false);
+        }
+        return getLayerAncestors(solo.id, layers).some(ancestor => ancestor.id === layerId);
     }
+    if (layer.visible === false) return false;
     return getLayerAncestors(layerId, layers).every(ancestor => ancestor.visible !== false);
 }
 
