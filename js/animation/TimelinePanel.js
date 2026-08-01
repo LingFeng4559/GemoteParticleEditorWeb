@@ -1,5 +1,5 @@
 import { normalizeTransform } from './AnimationModel.js';
-import { buildOrbitModifier, buildSpinModifier, buildTransformFromValues, calculateParticleCenter, removeKeyframesAtTick, replaceModifierByType, upsertTransformKeyframes } from './TimelineControlModel.js';
+import { applySpinDirection, buildOrbitModifier, buildSpinModifier, buildTransformFromValues, calculateParticleCenter, removeKeyframesAtTick, removeModifierByType, replaceModifierByType, spinDirection, upsertTransformKeyframes } from './TimelineControlModel.js';
 
 class TimelinePanel {
     constructor(stateManager) {
@@ -46,11 +46,13 @@ class TimelinePanel {
                 <fieldset><legend>Spin 旋轉修改器</legend>
                     <label><input data-spin="enabled" type="checkbox"> 啟用</label>
                     <label>軸 <select data-spin="axis"><option>X</option><option selected>Y</option><option>Z</option></select></label>
+                    <label>方向 <select data-spin="direction"><option value="left">左旋</option><option value="right" selected>右旋</option></select></label>
                     <label>起始° <input data-spin="from" type="number" value="0"></label>
                     <label>結束° <input data-spin="to" type="number" value="360"></label>
                     <label>開始 tick <input data-spin="startTick" type="number" min="0" value="0"></label>
                     <label>長度 <input data-spin="duration" type="number" min="1" value="80"></label>
                     <label>緩動 <select data-spin="easing"><option value="linear">線性</option><option value="ease-in-out">慢入慢出</option><option value="ease-in">慢入</option><option value="ease-out">慢出</option></select></label>
+                    <button type="button" data-spin-action="remove" class="danger-action">刪除 Spin 修改器</button>
                 </fieldset>
                 <fieldset><legend>Orbit 公轉修改器</legend>
                     <label><input data-orbit="enabled" type="checkbox"> 啟用</label>
@@ -105,6 +107,7 @@ class TimelinePanel {
             input.addEventListener('input', () => this.scheduleCommit('spin'));
             input.addEventListener('change', () => this.commitSpin());
         });
+        this.controlsRoot.querySelector('[data-spin-action="remove"]').addEventListener('click', () => this.removeSpin());
         this.controlsRoot.querySelectorAll('[data-transform-action]').forEach(button => button.addEventListener('click', () => this.handleTransformAction(button.dataset.transformAction)));
         this.controlsRoot.querySelectorAll('[data-key-action]').forEach(button => button.addEventListener('click', () => this.handleKeyAction(button.dataset.keyAction)));
         this.controlsRoot.querySelectorAll('[data-timing]').forEach(input => input.addEventListener('change', () => this.commitTiming()));
@@ -206,14 +209,26 @@ class TimelinePanel {
         if (!layer) return;
         const read = key => this.controlsRoot.querySelector(`[data-spin="${key}"]`);
         const current = layer.modifiers?.find(item => item.type === 'spin');
+        const from = read('from').value;
+        const to = read('direction').value === spinDirection(from, read('to').value)
+            ? read('to').value
+            : applySpinDirection(from, read('to').value, read('direction').value);
         const modifier = buildSpinModifier(current, {
             enabled: read('enabled').checked, axis: read('axis').value,
-            from: read('from').value, to: read('to').value,
+            from, to,
             startTick: read('startTick').value, duration: read('duration').value,
             easing: read('easing').value
         });
         const modifiers = replaceModifierByType(layer.modifiers, modifier);
         this.stateManager.updateLayerAnimation(layer.id, { modifiers });
+    }
+
+    removeSpin() {
+        const layer = this.selectedLayer();
+        if (!layer) return;
+        clearTimeout(this.commitTimers.get('spin'));
+        this.commitTimers.delete('spin');
+        this.stateManager.updateLayerAnimation(layer.id, { modifiers: removeModifierByType(layer.modifiers, 'spin') });
     }
 
     update(state) {
@@ -239,8 +254,9 @@ class TimelinePanel {
             if (document.activeElement === input || this.commitTimers.has('spin')) return;
             if (input.type === 'checkbox') input.checked = !!value; else input.value = value;
         };
-        set('enabled', spin?.enabled); set('axis', spin?.axis || 'Y'); set('from', spin?.from ?? 0); set('to', spin?.to ?? 360);
+        set('enabled', spin?.enabled); set('axis', spin?.axis || 'Y'); set('direction', spinDirection(spin?.from ?? 0, spin?.to ?? 360)); set('from', spin?.from ?? 0); set('to', spin?.to ?? 360);
         set('startTick', spin?.startTick ?? 0); set('duration', spin?.duration ?? state.timelineDuration); set('easing', spin?.easing || 'linear');
+        this.controlsRoot.querySelector('[data-spin-action="remove"]').disabled = !spin;
         const timing = layer.timing || {};
         this.controlsRoot.querySelectorAll('[data-timing]').forEach(input => {
             if (document.activeElement === input) return;

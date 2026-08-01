@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildOrbitModifier, buildSpinModifier, buildTransformFromValues, calculateParticleCenter, removeKeyframesAtTick, replaceModifierByType, upsertTransformKeyframes } from '../js/animation/TimelineControlModel.js';
+import { applySpinDirection, buildOrbitModifier, buildSpinModifier, buildTransformFromValues, calculateParticleCenter, removeKeyframesAtTick, removeModifierByType, replaceModifierByType, spinDirection, upsertTransformKeyframes } from '../js/animation/TimelineControlModel.js';
 
 test('timeline controls preserve negative and multi-turn spin angles', () => {
     const negative = buildSpinModifier(null, { enabled: true, axis: 'y', from: '0', to: '-360', duration: '80' }, () => 'spin-a');
@@ -23,6 +23,20 @@ test('transform controls retain unspecified values and accept zero', () => {
 test('replacing spin leaves other modifier types intact', () => {
     const modifiers = replaceModifierByType([{ type: 'orbit', id: 'orbit' }, { type: 'spin', id: 'old' }], { type: 'spin', id: 'new' });
     assert.deepEqual(modifiers.map(item => item.id), ['orbit', 'new']);
+});
+
+test('spin direction is explicit and preserves the configured turn count', () => {
+    assert.equal(spinDirection(30, -690), 'left');
+    assert.equal(spinDirection(30, 750), 'right');
+    assert.equal(applySpinDirection(30, 750, 'left'), -690);
+    assert.equal(applySpinDirection(30, -690, 'right'), 750);
+});
+
+test('removing spin leaves every other modifier intact', () => {
+    const modifiers = removeModifierByType([
+        { type: 'wave', id: 'wave' }, { type: 'spin', id: 'spin' }, { type: 'orbit', id: 'orbit' }
+    ], 'spin');
+    assert.deepEqual(modifiers.map(item => item.id), ['wave', 'orbit']);
 });
 
 test('particle center can be used as a deterministic pivot', () => {

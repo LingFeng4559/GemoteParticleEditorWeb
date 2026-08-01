@@ -31,6 +31,20 @@ export function replaceModifierByType(modifiers, modifier) {
     return [...(modifiers || []).filter(item => item.type !== modifier.type), modifier];
 }
 
+export function removeModifierByType(modifiers, type) {
+    return (modifiers || []).filter(item => item.type !== type);
+}
+
+export function spinDirection(from, to) {
+    return finite(to, 360) - finite(from, 0) < 0 ? 'left' : 'right';
+}
+
+export function applySpinDirection(from, to, direction) {
+    const start = finite(from, 0);
+    const distance = Math.abs(finite(to, start + 360) - start) || 360;
+    return start + (direction === 'left' ? -distance : distance);
+}
+
 export function buildOrbitModifier(current, values = {}, idFactory = () => crypto.randomUUID()) {
     return normalizeModifier({
         id: current?.id || idFactory(), type: 'orbit', name: current?.name || '公轉',
