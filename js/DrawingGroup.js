@@ -24,6 +24,10 @@ class DrawingGroup {
         this.layerColor = config.layerColor || '#64748b';
         this.source = config.source || null;
         this.imageSettings = config.imageSettings || null;
+        this.transform = config.transform || null;
+        this.timing = config.timing || null;
+        this.tracks = config.tracks || [];
+        this.modifiers = config.modifiers || [];
 
         // 邊界框
         this.bounds = config.bounds || this.calculateBounds();
@@ -283,6 +287,10 @@ class DrawingGroup {
             layerColor: this.layerColor,
             source: this.source,
             imageSettings: this.imageSettings,
+            transform: this.transform,
+            timing: this.timing,
+            tracks: this.tracks,
+            modifiers: this.modifiers,
             particles: this.particles.map(p => ({
                 id: p.id,
                 x: p.x,
@@ -319,6 +327,10 @@ class DrawingGroup {
             layerColor: json.layerColor,
             source: json.source,
             imageSettings: json.imageSettings,
+            transform: json.transform,
+            timing: json.timing,
+            tracks: json.tracks,
+            modifiers: json.modifiers,
             particles: json.particles || [],
             particleType: json.particleType,
             color: json.color,

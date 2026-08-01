@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import DrawingGroup from './DrawingGroup.js';
 import { isLayerContainer, isLayerEffectivelyVisible } from './LayerModel.js';
+import { evaluateLayerParticles } from './animation/AnimationModel.js';
 
 class SceneSync {
     constructor(stateManager, sceneManager) {
@@ -79,11 +80,12 @@ class SceneSync {
         // 新增或更新群組
         for (const groupData of state.drawingGroups) {
             if (isLayerContainer(groupData)) continue;
+            const evaluatedGroupData = { ...groupData, particles: evaluateLayerParticles(groupData, state.drawingGroups, state.timelineTick) };
             const shouldBeVisible = isLayerEffectivelyVisible(groupData.id, state.drawingGroups);
             if (!renderedGroupIds.has(groupData.id)) {
-                const group = DrawingGroup.fromJSON(groupData);
+                const group = DrawingGroup.fromJSON(evaluatedGroupData);
 
-                group.meshes.push(...this.createGroupMeshes(groupData));
+                group.meshes.push(...this.createGroupMeshes(evaluatedGroupData));
 
                 this.groupObjectMap.set(groupData.id, group);
                 group.visible = shouldBeVisible;
@@ -103,8 +105,8 @@ class SceneSync {
                 const cloud = group.meshes[0];
                 const renderModeChanged = (!!cloud?.isPoints) === !!groupData.isAnimated;
                 const needsRebuild = renderModeChanged ||
-                    (groupData.isAnimated && group.meshes.length !== groupData.particles.length) ||
-                    (!groupData.isAnimated && (!cloud || !this.updateParticleCloud(cloud, groupData)));
+                    (groupData.isAnimated && group.meshes.length !== evaluatedGroupData.particles.length) ||
+                    (!groupData.isAnimated && (!cloud || !this.updateParticleCloud(cloud, evaluatedGroupData)));
                 if (needsRebuild) {
                     // 粒子數量不同，重新渲染
                     group.meshes.forEach(mesh => {
@@ -114,23 +116,23 @@ class SceneSync {
                     });
                     group.meshes = [];
 
-                    group.particles = groupData.particles;
+                    group.particles = evaluatedGroupData.particles;
                     group.bounds = group.calculateBounds();
                     group.position = group.calculateCenter();
 
-                    group.meshes.push(...this.createGroupMeshes(groupData));
+                    group.meshes.push(...this.createGroupMeshes(evaluatedGroupData));
                     group.meshes.forEach(mesh => { mesh.visible = shouldBeVisible; });
                 }
-                if (group.particles.length === groupData.particles.length) {
-                    group.particles = groupData.particles;
-                    group.position = groupData.position || group.calculateCenter();
-                    group.bounds = groupData.bounds || group.calculateBounds();
+                if (group.particles.length === evaluatedGroupData.particles.length) {
+                    group.particles = evaluatedGroupData.particles;
+                    group.position = group.calculateCenter();
+                    group.bounds = group.calculateBounds();
                     if (groupData.isAnimated && !needsRebuild) {
                         group.particles.forEach((particle, index) => {
                             const mesh = group.meshes[index];
                             if (!mesh) return;
                             mesh.position.set(particle.x, particle.y, particle.z);
-                            mesh.material?.color?.set(particle.color || groupData.color || '#ff0000');
+                            mesh.material?.color?.set(particle.color || evaluatedGroupData.color || '#ff0000');
                         });
                     }
                     group.updateVisuals(this.sceneManager.scene);

@@ -39,7 +39,11 @@ class ProjectManager {
                     bounds: group.bounds,
                     position: group.position,
                     source: group.source,
-                    imageSettings: group.imageSettings
+                    imageSettings: group.imageSettings,
+                    transform: group.transform,
+                    timing: group.timing,
+                    tracks: group.tracks,
+                    modifiers: group.modifiers
                 };
                 if (group.tickInterval !== undefined && group.tickInterval !== null) {
                     out.tickInterval = group.tickInterval;
@@ -59,6 +63,7 @@ class ProjectManager {
                 animationTickInterval: state.animationTickInterval,
                 loop: state.loop,
                 head: state.head,
+                timelineDuration: state.timelineDuration,
                 horizontalMirrorEnabled: !!state.horizontalMirrorEnabled,
                 horizontalMirrorZEnabled: !!state.horizontalMirrorZEnabled,
                 verticalMirrorEnabled: !!state.verticalMirrorEnabled,

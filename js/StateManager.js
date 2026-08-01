@@ -37,6 +37,9 @@ class StateManager {
         this.characterMode = 'opaque'; // 參考角色模式: 'opaque', 'ghost', 'hidden'
         this.loop = 0; // Gemote 循環次數
         this.head = false; // Gemote 是否從頭部高度播放
+        this.timelineTick = 0;
+        this.timelineDuration = 80;
+        this.timelinePlaying = false;
 
         // 監聽器
         this.listeners = [];
@@ -88,6 +91,9 @@ class StateManager {
             characterMode: this.characterMode,
             loop: this.loop,
             head: this.head,
+            timelineTick: this.timelineTick,
+            timelineDuration: this.timelineDuration,
+            timelinePlaying: this.timelinePlaying,
             usedColors: this.getUsedColors(),
         };
     }
@@ -236,6 +242,38 @@ class StateManager {
         this.head = !!head;
         this.setUnsavedChanges(true);
         this.notify();
+    }
+
+    setTimelineTick(tick) {
+        const value = Number(tick);
+        this.timelineTick = Math.max(0, Math.min(this.timelineDuration, Number.isFinite(value) ? value : 0));
+        this.notify();
+    }
+
+    setTimelineDuration(duration) {
+        const value = Number(duration);
+        this.timelineDuration = Math.max(1, Math.round(Number.isFinite(value) ? value : 80));
+        this.timelineTick = Math.min(this.timelineTick, this.timelineDuration);
+        this.setUnsavedChanges(true);
+        this.notify();
+    }
+
+    setTimelinePlaying(playing) {
+        this.timelinePlaying = !!playing;
+        this.notify();
+    }
+
+    updateLayerAnimation(layerId, updates) {
+        const layer = this.drawingGroups.find(group => group.id === layerId);
+        if (!layer) return false;
+        for (const key of ['transform', 'timing', 'tracks', 'modifiers']) {
+            if (Object.prototype.hasOwnProperty.call(updates, key)) layer[key] = updates[key];
+        }
+        this.drawingGroups = normalizeLayers(this.drawingGroups);
+        this.selectedGroup = this.drawingGroups.find(group => group.id === layerId) || null;
+        this.setUnsavedChanges(true);
+        this.notify();
+        return true;
     }
 
     setHorizontalMirrorEnabled(enabled) {
@@ -464,6 +502,7 @@ class StateManager {
             this.radialSymmetryOffset = projectData.settings.radialSymmetryOffset || 0;
             this.particleDensity = projectData.settings.particleDensity || 1.0;
             this.characterMode = projectData.settings.characterMode || 'opaque';
+            this.timelineDuration = Math.max(1, Number(projectData.settings.timelineDuration) || 80);
         } else {
             this.animationEnabled = false;
             this.animationTickInterval = 1;
@@ -481,7 +520,10 @@ class StateManager {
             this.radialSymmetryOffset = 0;
             this.particleDensity = 1.0;
             this.characterMode = 'opaque';
+            this.timelineDuration = 80;
         }
+        this.timelineTick = 0;
+        this.timelinePlaying = false;
 
         if (projectData.particles) {
             this.particlePoints = projectData.particles.map(p => ({

@@ -15,6 +15,7 @@ import SelectionManager from './js/SelectionManager.js';
 import AnimationPreview from './js/AnimationPreview.js';
 import MirrorManager from './js/MirrorManager.js';
 import { reflectParticles } from './js/ReflectionUtil.js';
+import TimelinePanel from './js/animation/TimelinePanel.js';
 
 class App {
     constructor() {
@@ -36,6 +37,7 @@ class App {
         this.eraserTool = new EraserTool(this.stateManager, this.sceneManager, this.sceneSync);
         this.selectionManager = new SelectionManager(this.sceneManager, this.sceneSync);
         this.animationPreview = new AnimationPreview(this.stateManager, this.sceneSync);
+        this.timelinePanel = new TimelinePanel(this.stateManager);
         this.mirrorManager = new MirrorManager(this.sceneManager);
 
         this.BRUSH_RADIUS = 0.3;
