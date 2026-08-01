@@ -30,3 +30,11 @@ export function buildSpinModifier(current, values = {}, idFactory = () => crypto
 export function replaceModifierByType(modifiers, modifier) {
     return [...(modifiers || []).filter(item => item.type !== modifier.type), modifier];
 }
+
+export function calculateParticleCenter(particles) {
+    if (!Array.isArray(particles) || particles.length === 0) return { x: 0, y: 0, z: 0 };
+    const total = particles.reduce((sum, point) => ({
+        x: sum.x + finite(point.x), y: sum.y + finite(point.y), z: sum.z + finite(point.z)
+    }), { x: 0, y: 0, z: 0 });
+    return { x: total.x / particles.length, y: total.y / particles.length, z: total.z / particles.length };
+}

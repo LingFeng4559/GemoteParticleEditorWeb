@@ -269,6 +269,10 @@
         </div>
     </div>
 
-    <script type="module" src="main.js"></script>
+    <script type="module">
+        // A fresh root-module URL prevents a long-lived editor tab from
+        // reusing an obsolete ES module graph after an application update.
+        import(`./main.js?v=${Date.now()}`);
+    </script>
 </body>
 </html>

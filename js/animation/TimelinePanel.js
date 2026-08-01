@@ -1,5 +1,5 @@
 import { normalizeTransform } from './AnimationModel.js';
-import { buildSpinModifier, buildTransformFromValues, replaceModifierByType } from './TimelineControlModel.js';
+import { buildSpinModifier, buildTransformFromValues, calculateParticleCenter, replaceModifierByType } from './TimelineControlModel.js';
 
 class TimelinePanel {
     constructor(stateManager) {
@@ -27,9 +27,19 @@ class TimelinePanel {
                     <label>位置 X <input data-transform="position.x" type="number" step="0.1"></label>
                     <label>Y <input data-transform="position.y" type="number" step="0.1"></label>
                     <label>Z <input data-transform="position.z" type="number" step="0.1"></label>
+                    <label>旋轉 X <input data-transform="rotation.x" type="number" step="1"></label>
+                    <label>Y <input data-transform="rotation.y" type="number" step="1"></label>
+                    <label>Z <input data-transform="rotation.z" type="number" step="1"></label>
+                    <label>縮放 X <input data-transform="scale.x" type="number" step="0.1"></label>
+                    <label>Y <input data-transform="scale.y" type="number" step="0.1"></label>
+                    <label>Z <input data-transform="scale.z" type="number" step="0.1"></label>
                     <label>Pivot X <input data-transform="pivot.x" type="number" step="0.1"></label>
                     <label>Y <input data-transform="pivot.y" type="number" step="0.1"></label>
                     <label>Z <input data-transform="pivot.z" type="number" step="0.1"></label>
+                    <button type="button" data-transform-action="center">Pivot 粒子中心</button>
+                    <button type="button" data-transform-action="copy">複製</button>
+                    <button type="button" data-transform-action="paste">貼上</button>
+                    <button type="button" data-transform-action="reset">重設</button>
                 </fieldset>
                 <fieldset><legend>Spin 旋轉修改器</legend>
                     <label><input data-spin="enabled" type="checkbox"> 啟用</label>
@@ -58,6 +68,7 @@ class TimelinePanel {
             input.addEventListener('input', () => this.scheduleCommit('spin'));
             input.addEventListener('change', () => this.commitSpin());
         });
+        this.root.querySelectorAll('[data-transform-action]').forEach(button => button.addEventListener('click', () => this.handleTransformAction(button.dataset.transformAction)));
     }
 
     scheduleCommit(kind) {
@@ -70,6 +81,28 @@ class TimelinePanel {
 
     selectedLayer() {
         return this.stateManager.drawingGroups.find(layer => layer.id === this.stateManager.selectedGroup?.id);
+    }
+
+    handleTransformAction(action) {
+        const layer = this.selectedLayer();
+        if (!layer) return;
+        if (action === 'copy') {
+            this.transformClipboard = structuredClone(normalizeTransform(layer.transform));
+            return;
+        }
+        if (action === 'paste' && this.transformClipboard) {
+            this.stateManager.updateLayerAnimation(layer.id, { transform: structuredClone(this.transformClipboard) });
+            return;
+        }
+        if (action === 'reset') {
+            this.stateManager.updateLayerAnimation(layer.id, { transform: normalizeTransform() });
+            return;
+        }
+        if (action === 'center') {
+            const transform = normalizeTransform(layer.transform);
+            transform.pivot = calculateParticleCenter(layer.particles);
+            this.stateManager.updateLayerAnimation(layer.id, { transform });
+        }
     }
 
     commitTransform() {
