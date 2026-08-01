@@ -52,15 +52,16 @@ class WorkspaceShell {
                 <button data-command="grid" class="active" aria-pressed="true">網格</button>
                 <button data-command="character" class="active" aria-pressed="true">Steve</button>
             </div>
-            <div id="quick-start" aria-label="快速開始">
+            <div id="quick-start" role="dialog" aria-modal="true" aria-labelledby="quick-start-title" aria-describedby="quick-start-description">
+                <button class="quick-start-close" data-start-action="dismiss" aria-label="關閉並開始創作" title="關閉並開始創作">×</button>
                 <span class="quick-start-mark">✦</span>
-                <h2>開始建立粒子效果</h2>
-                <p>選擇一種方式開始；所有設定之後都能調整。</p>
-                <div>
-                    <button data-start-action="image">▧ 匯入圖片</button>
-                    <button data-start-action="brush">✎ 使用筆刷</button>
-                    <button data-start-action="load">↥ 載入專案／YML</button>
+                <h2 id="quick-start-title">開始建立粒子效果</h2>
+                <p id="quick-start-description">建立空白創作，或載入既有的 YML 繼續編輯。</p>
+                <div class="quick-start-actions">
+                    <button data-start-action="new" class="primary">＋ 新的創作</button>
+                    <button data-start-action="load">↥ 載入 YML</button>
                 </div>
+                <div class="quick-start-drop" data-role="yml-dropzone"><strong>也可以把 YML 拖曳到這裡</strong><small>支援 .yml 與 .yaml</small></div>
             </div>
             <div id="preview-hud" aria-label="預覽控制">
                 <button data-preview-action="restart">↺ 重新播放</button>
@@ -123,10 +124,37 @@ class WorkspaceShell {
         });
         document.querySelectorAll('[data-start-action]').forEach(button => button.addEventListener('click', () => {
             const action = button.dataset.startAction;
-            if (action === 'image') { this.setLeftTab('assets'); document.querySelector('#btn-import-images')?.click(); }
-            if (action === 'brush') { this.quickStartDismissed = true; this.setLeftTab('tools'); this.stateManager.setMode('brush'); }
-            if (action === 'load') document.querySelector('#btn-load-project')?.click();
+            if (action === 'new' && this.projectManager?.newProject() !== false) this.dismissQuickStart();
+            if (action === 'dismiss') this.dismissQuickStart();
+            if (action === 'load') this.projectManager?.loadYml();
         }));
+        const quickStart = document.querySelector('#quick-start');
+        const dropzone = document.querySelector('[data-role="yml-dropzone"]');
+        ['dragenter', 'dragover'].forEach(type => quickStart.addEventListener(type, event => {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+            dropzone.classList.add('is-dragging');
+        }));
+        quickStart.addEventListener('dragleave', event => {
+            event.preventDefault();
+            if (event.relatedTarget && quickStart.contains(event.relatedTarget)) return;
+            dropzone.classList.remove('is-dragging');
+        });
+        quickStart.addEventListener('drop', async event => {
+            event.preventDefault();
+            dropzone.classList.remove('is-dragging');
+            const file = [...event.dataTransfer.files].find(item => /\.ya?ml$/i.test(item.name));
+            if (!file) {
+                dropzone.classList.add('has-error');
+                dropzone.querySelector('strong').textContent = '請拖入 .yml 或 .yaml 檔案';
+                window.setTimeout(() => {
+                    dropzone.classList.remove('has-error');
+                    dropzone.querySelector('strong').textContent = '也可以把 YML 拖曳到這裡';
+                }, 1800);
+                return;
+            }
+            if (await this.projectManager?.loadFile(file)) this.dismissQuickStart(false);
+        });
         document.querySelector('#viewport-toolbar [data-command="frame"]').addEventListener('click', () => this.framePreview());
         document.querySelector('#viewport-toolbar [data-command="grid"]').addEventListener('click', event => {
             const visible = !this.sceneManager.gridHelper.visible;
@@ -164,6 +192,19 @@ class WorkspaceShell {
         }
         if (previousWorkspace === 'preview' && workspace !== 'preview') this.stateManager.setTimelinePlaying(false);
         this.update(this.stateManager.getState());
+    }
+
+    bindProjectManager(projectManager) {
+        this.projectManager = projectManager;
+    }
+
+    dismissQuickStart(useBrush = true) {
+        this.quickStartDismissed = true;
+        document.querySelector('#quick-start')?.classList.remove('visible');
+        if (useBrush) {
+            this.setLeftTab('tools');
+            this.stateManager.setMode('brush');
+        }
     }
 
     setTimelineCollapsed(collapsed) {

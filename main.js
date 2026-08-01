@@ -59,6 +59,7 @@ class App {
     }
 
     connectModules() {
+        this.workspaceShell.bindProjectManager(this.projectManager);
         this.uiManager.bindProjectManager(this.projectManager);
         this.uiManager.bindAnimationPreview(this.animationPreview);
         this.stateManager.subscribe(this.onStateChange.bind(this));

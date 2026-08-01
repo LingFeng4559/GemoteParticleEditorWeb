@@ -1273,12 +1273,41 @@ input[type="range"]:hover::-webkit-slider-thumb { background-color: var(--primar
     transform: translate(-50%, -50%);
 }
 #quick-start.visible { display: block; }
+.quick-start-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 30px !important;
+    min-height: 30px !important;
+    padding: 0 !important;
+    color: #94a3b8 !important;
+    background: transparent !important;
+    border-color: transparent !important;
+    font-size: 20px !important;
+    line-height: 1;
+}
+.quick-start-close:hover { color: #f8fafc !important; background: #1e293b !important; }
 .quick-start-mark { color: #38bdf8; font-size: 22px; }
 #quick-start h2 { margin: 7px 0 4px; font-size: 16px; }
 #quick-start p { color: #8293a8; font-size: 11px; }
-#quick-start > div { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 16px; }
+#quick-start .quick-start-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 16px; }
 #quick-start button { width: auto; min-height: 38px; padding: 7px; color: #dbeafe; background: #1e293b; border: 1px solid #475569; border-radius: 7px; font-size: 10px; }
-#quick-start button:first-child { color: #e0f2fe; background: #075985; border-color: #0ea5e9; }
+#quick-start button.primary { color: #e0f2fe; background: #075985; border-color: #0ea5e9; }
+.quick-start-drop {
+    display: grid;
+    gap: 3px;
+    margin-top: 10px;
+    padding: 13px;
+    color: #94a3b8;
+    background: rgba(15, 23, 42, .72);
+    border: 1px dashed #475569;
+    border-radius: 8px;
+    transition: border-color .15s, background .15s, color .15s;
+}
+.quick-start-drop strong { font-size: 11px; font-weight: 600; }
+.quick-start-drop small { color: #64748b; font-size: 9px; }
+.quick-start-drop.is-dragging { color: #e0f2fe; background: rgba(7, 89, 133, .45); border-color: #38bdf8; }
+.quick-start-drop.has-error { color: #fecaca; background: rgba(127, 29, 29, .25); border-color: #f87171; }
 #workspace-statusbar [data-role="status-save"] { color: #6ee7b7; }
 
 .professional-workspace .timeline-panel {

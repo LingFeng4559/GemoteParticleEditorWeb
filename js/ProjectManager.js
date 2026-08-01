@@ -84,10 +84,11 @@ class ProjectManager {
     newProject() {
         if (this.stateManager.getState().hasUnsavedChanges) {
             if (!confirm(lang.get('confirm_new_project', { default: '目前專案有未儲存的變更，確定要建立新專案嗎？' }))) {
-                return;
+                return false;
             }
         }
         this.stateManager.loadProject({ name: '未命名專案' });
+        return true;
     }
 
     saveProject() {
@@ -115,19 +116,30 @@ class ProjectManager {
     }
 
     loadProject() {
+        this.openFilePicker('.gemote3d,.mythic3d,.json,.yml,.yaml');
+    }
+
+    loadYml() {
+        this.openFilePicker('.yml,.yaml');
+    }
+
+    openFilePicker(accept) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = accept;
+        input.onchange = (event) => this.loadFile(event.target.files[0]);
+        input.click();
+    }
+
+    loadFile(file) {
+        if (!file) return Promise.resolve(false);
         if (this.stateManager.getState().hasUnsavedChanges) {
             if (!confirm(lang.get('confirm_load_project', { default: '目前專案有未儲存的變更，確定要載入新專案嗎？' }))) {
-                return;
+                return Promise.resolve(false);
             }
         }
 
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.gemote3d,.mythic3d,.json,.yml,.yaml';
-        input.onchange = (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-
+        return new Promise((resolve) => {
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
@@ -136,14 +148,19 @@ class ProjectManager {
                     if (isYml) projectData.name = file.name.replace(/\.ya?ml$/i, '');
                     this.stateManager.loadProject(projectData);
                     console.log(`專案 "${projectData.name}" 載入成功！`);
+                    resolve(true);
                 } catch (error) {
                     console.error('解析專案檔案時發生錯誤:', error);
                     alert(lang.get('error_load_project', { default: '無法讀取專案檔案，請確認檔案格式是否正確。' }));
+                    resolve(false);
                 }
             };
+            reader.onerror = () => {
+                alert(lang.get('error_load_project', { default: '無法讀取專案檔案，請確認檔案格式是否正確。' }));
+                resolve(false);
+            };
             reader.readAsText(file);
-        };
-        input.click();
+        });
     }
 }
 
