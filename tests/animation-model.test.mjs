@@ -6,10 +6,28 @@ import {
     evaluateLayerVisibility,
     evaluateTrack,
     mapLayerTick,
+    normalizeModifiers,
+    normalizeTiming,
+    normalizeTracks,
+    normalizeTransform,
     transformPoint
 } from '../js/animation/AnimationModel.js';
 
 const close = (actual, expected, epsilon = 1e-9) => assert.ok(Math.abs(actual - expected) < epsilon, `${actual} != ${expected}`);
+
+test('null animation fields normalize to safe defaults', () => {
+    assert.deepEqual(normalizeTransform(null), {
+        position: { x: 0, y: 0, z: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        scale: { x: 1, y: 1, z: 1 },
+        pivot: { x: 0, y: 0, z: 0 }
+    });
+    assert.equal(normalizeTiming(null).duration, 80);
+    assert.deepEqual(normalizeTracks([null]), [{
+        id: 'track-0', property: 'position.x', enabled: true, keyframes: []
+    }]);
+    assert.equal(normalizeModifiers([null])[0].enabled, true);
+});
 
 test('pivot rotation preserves pivot and rotates around it', () => {
     const point = transformPoint({ x: 2, y: 0, z: 0 }, {

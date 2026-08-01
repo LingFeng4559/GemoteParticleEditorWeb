@@ -148,6 +148,11 @@ class ShapeTool {
         this.sceneManager.scene.remove(this.previewMesh);
         this.previewMesh = null;
     }
+
+    cancelShape() {
+        this.clearPreview();
+        this.startPoint = null;
+    }
 }
 
 export default ShapeTool;

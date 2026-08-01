@@ -311,6 +311,7 @@ class App {
 
     handleMouseUp(event) {
         const state = this.stateManager.getState();
+        try {
         
         // 總是在 MouseUp 時恢復相機控制
         this.sceneManager.setControlsEnabled(true);
@@ -356,8 +357,13 @@ class App {
             this.shapeTool.clearPreview();
         }
 
-        this.stateManager.setDrawing(false);
-        this.stateManager.setLastPointPosition(null);
+        } finally {
+            // 提交失敗時仍必須解除繪畫鎖定並清除形狀預覽。
+            this.sceneManager.setControlsEnabled(true);
+            this.shapeTool.cancelShape();
+            this.stateManager.setDrawing(false);
+            this.stateManager.setLastPointPosition(null);
+        }
     }
 
     // === 選取模式輔助 ===

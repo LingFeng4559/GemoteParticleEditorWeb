@@ -14,6 +14,7 @@ const normalizeVector = (value, fallback) => ({
 });
 
 export function normalizeTransform(value = {}) {
+    value = value && typeof value === 'object' ? value : {};
     const defaults = createDefaultTransform();
     return {
         position: normalizeVector(value.position, defaults.position),
@@ -24,6 +25,7 @@ export function normalizeTransform(value = {}) {
 }
 
 export function normalizeTiming(value = {}) {
+    value = value && typeof value === 'object' ? value : {};
     return {
         startTick: Math.max(0, number(value.startTick, 0)),
         duration: Math.max(1, number(value.duration, 80)),
@@ -33,6 +35,7 @@ export function normalizeTiming(value = {}) {
 }
 
 export function normalizeModifier(value = {}, index = 0) {
+    value = value && typeof value === 'object' ? value : {};
     if (value.type === 'wave') {
         return { id: value.id || `wave-${index}`, type: 'wave', name: value.name || '波動', enabled: value.enabled !== false,
             axis: ['X', 'Y', 'Z'].includes(String(value.axis).toUpperCase()) ? String(value.axis).toUpperCase() : 'Y',
@@ -74,6 +77,7 @@ export function normalizeModifier(value = {}, index = 0) {
 export const normalizeModifiers = values => (Array.isArray(values) ? values : []).map(normalizeModifier);
 
 export function normalizeTrack(value = {}, index = 0) {
+    value = value && typeof value === 'object' ? value : {};
     const keyframes = (Array.isArray(value.keyframes) ? value.keyframes : [])
         .map((keyframe, keyframeIndex) => ({
             id: keyframe.id || `key-${index}-${keyframeIndex}`,
