@@ -208,8 +208,9 @@ class UIManager {
         safeAdd(this.copyCodeBtn, 'click', () => this.codeGenerator.generateAndCopy());
         safeAdd(this.estimateExportBtn, 'click', () => this.codeGenerator.estimate());
         safeAdd(this.exportQualitySelect, 'change', event => {
-            if (event.target.value !== 'custom') this.exportCommandLimitInput.value = event.target.value;
-            this.exportCommandLimitInput.disabled = event.target.value !== 'custom';
+            const quality = event.target.value;
+            if (quality !== 'custom' && quality !== 'all') this.exportCommandLimitInput.value = quality;
+            this.exportCommandLimitInput.disabled = quality !== 'custom';
             this.codeGenerator.estimate();
         });
         safeAdd(this.clearBtn, 'click', () => this.requestClear());

@@ -13,3 +13,11 @@ test('baker emits opposite spin frames and caps large exports', () => {
     assert.ok(Math.abs(atEnd[0].point.x - 1) < 1e-9);
     assert.ok(Math.abs(atEnd[1].point.x - 1) < 1e-9);
 });
+
+test('unlimited export bakes every timeline tick without downsampling', () => {
+    const layer = { id: 'all', particles: [{ x: 1, y: 0, z: 0, particleType: 'flame' }], visible: true, exportEnabled: true, modifiers: [{ type: 'spin', enabled: true, axis: 'Y', from: 0, to: 360, duration: 4 }] };
+    const baked = bakeParticleEvents({ particlePoints: [], drawingGroups: [layer], timelineDuration: 4 }, { maxCommands: Infinity });
+    assert.equal(baked.bakeStep, 1);
+    assert.equal(baked.limited, false);
+    assert.deepEqual(baked.events.map(event => event.tick), [0, 1, 2, 3, 4]);
+});

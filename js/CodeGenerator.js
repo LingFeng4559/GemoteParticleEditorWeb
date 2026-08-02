@@ -37,7 +37,7 @@ class CodeGenerator {
 
         const limit = this.getCommandLimit();
         const baked = bakeParticleEvents(state, { maxCommands: limit });
-        lines.push(`  #@gemote-bake ${JSON.stringify({ step: baked.bakeStep, idealCommands: baked.idealCommands, commands: baked.estimatedCommands, limit })}`);
+        lines.push(`  #@gemote-bake ${JSON.stringify({ step: baked.bakeStep, idealCommands: baked.idealCommands, commands: baked.estimatedCommands, limit: Number.isFinite(limit) ? limit : 'all' })}`);
         let lastTick = 0;
         baked.events.forEach((event, index) => {
             const tick = Math.round(event.tick);
@@ -55,6 +55,7 @@ class CodeGenerator {
 
     getCommandLimit() {
         const selected = this.qualitySelect?.value;
+        if (selected === 'all') return Infinity;
         const value = selected === 'custom' ? Number(this.commandLimitInput?.value) : Number(selected);
         return Math.max(100, Math.min(200000, Number.isFinite(value) ? value : 12000));
     }
