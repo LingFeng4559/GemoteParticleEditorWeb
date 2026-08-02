@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { applySpinDirection, buildOrbitModifier, buildSpinModifier, buildTransformFromValues, calculateParticleCenter, removeKeyframesAtTick, removeModifierByType, replaceModifierByType, spinDirection, upsertTransformKeyframes } from '../js/animation/TimelineControlModel.js';
+import { applySpinDirection, buildOrbitModifier, buildSpinModifier, buildTransformFromValues, calculateParticleCenter, removeKeyframesAtTick, removeModifierByType, removeTimelineItem, replaceModifierByType, spinDirection, upsertTransformKeyframes } from '../js/animation/TimelineControlModel.js';
 
 test('timeline controls preserve negative and multi-turn spin angles', () => {
     const negative = buildSpinModifier(null, { enabled: true, axis: 'y', from: '0', to: '-360', duration: '80' }, () => 'spin-a');
@@ -37,6 +37,13 @@ test('removing spin leaves every other modifier intact', () => {
         { type: 'wave', id: 'wave' }, { type: 'spin', id: 'spin' }, { type: 'orbit', id: 'orbit' }
     ], 'spin');
     assert.deepEqual(modifiers.map(item => item.id), ['wave', 'orbit']);
+});
+
+test('a timeline row can be removed by id without deleting sibling rows', () => {
+    const rows = removeTimelineItem([
+        { type: 'wave', id: 'wave-1' }, { type: 'wave', id: 'wave-2' }, { type: 'spin', id: 'spin-1' }
+    ], 'wave-1');
+    assert.deepEqual(rows.map(item => item.id), ['wave-2', 'spin-1']);
 });
 
 test('particle center can be used as a deterministic pivot', () => {

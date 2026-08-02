@@ -35,6 +35,10 @@ export function removeModifierByType(modifiers, type) {
     return (modifiers || []).filter(item => item.type !== type);
 }
 
+export function removeTimelineItem(items, id) {
+    return (items || []).filter(item => item.id !== id);
+}
+
 export function spinDirection(from, to) {
     return finite(to, 360) - finite(from, 0) < 0 ? 'left' : 'right';
 }

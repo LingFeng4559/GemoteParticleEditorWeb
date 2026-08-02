@@ -1,5 +1,5 @@
 import { normalizeTransform } from './AnimationModel.js';
-import { applySpinDirection, buildOrbitModifier, buildSpinModifier, buildTransformFromValues, calculateParticleCenter, removeKeyframesAtTick, removeModifierByType, replaceModifierByType, spinDirection, upsertTransformKeyframes } from './TimelineControlModel.js';
+import { applySpinDirection, buildOrbitModifier, buildSpinModifier, buildTransformFromValues, calculateParticleCenter, removeKeyframesAtTick, removeModifierByType, removeTimelineItem, replaceModifierByType, spinDirection, upsertTransformKeyframes } from './TimelineControlModel.js';
 
 class TimelinePanel {
     constructor(stateManager) {
@@ -231,6 +231,16 @@ class TimelinePanel {
         this.stateManager.updateLayerAnimation(layer.id, { modifiers: removeModifierByType(layer.modifiers, 'spin') });
     }
 
+    removeTimelineRow(kind, id) {
+        const layer = this.selectedLayer();
+        if (!layer || !id) return;
+        if (kind === 'modifier') {
+            this.stateManager.updateLayerAnimation(layer.id, { modifiers: removeTimelineItem(layer.modifiers, id) });
+        } else if (kind === 'track') {
+            this.stateManager.updateLayerAnimation(layer.id, { tracks: removeTimelineItem(layer.tracks, id) });
+        }
+    }
+
     update(state) {
         const layer = state.drawingGroups.find(item => item.id === state.selectedGroup?.id);
         this.root.querySelector('[data-role="selection"]').textContent = layer ? `編輯：${layer.name}` : '請選取圖層';
@@ -282,27 +292,35 @@ class TimelinePanel {
             return;
         }
         const duration = Math.max(1, Number(state.timelineDuration) || 80);
-        const tracks = (layer.tracks || []).filter(track => track.enabled !== false && track.keyframes?.length);
-        const modifiers = (layer.modifiers || []).filter(modifier => modifier.enabled !== false);
-        const rows = tracks.slice(0, 4).map(track => ({
+        const tracks = (layer.tracks || []).filter(track => track.keyframes?.length);
+        const modifiers = layer.modifiers || [];
+        const rows = tracks.map(track => ({
+            id: track.id,
+            kind: 'track',
             label: track.property || track.path || 'Property',
-            keys: track.keyframes.map(key => Number(key.tick) || 0)
+            keys: track.keyframes.map(key => Number(key.tick) || 0),
+            enabled: track.enabled !== false
         }));
-        modifiers.slice(0, Math.max(0, 4 - rows.length)).forEach(modifier => rows.push({
+        modifiers.forEach(modifier => rows.push({
+            id: modifier.id,
+            kind: 'modifier',
             label: `${modifier.type || 'Modifier'} · 作用區間`,
-            range: [Number(modifier.startTick) || 0, (Number(modifier.startTick) || 0) + (Number(modifier.duration) || duration)]
+            range: [Number(modifier.startTick) || 0, (Number(modifier.startTick) || 0) + (Number(modifier.duration) || duration)],
+            enabled: modifier.enabled !== false
         }));
         if (!rows.length) rows.push({ label: layer.name, keys: [] });
         root.innerHTML = rows.map(row => `
-            <div class="track-row">
+            <div class="track-row${row.enabled === false ? ' is-disabled' : ''}">
                 <span class="track-label">${this.escapeHtml(row.label)}</span>
                 <div class="track-lane">
                     ${row.range ? `<span class="modifier-range" style="left:${Math.max(0, row.range[0] / duration * 100)}%;width:${Math.max(1, Math.min(duration, row.range[1]) - row.range[0]) / duration * 100}%"></span>` : ''}
                     ${(row.keys || []).map(tick => `<button type="button" class="key-diamond" data-tick="${tick}" style="left:${Math.max(0, Math.min(100, tick / duration * 100))}%" title="Tick ${tick}"></button>`).join('')}
                     <span class="playhead" style="left:${Math.max(0, Math.min(100, (Number(state.timelineTick) || 0) / duration * 100))}%"></span>
                 </div>
+                ${row.id ? `<button type="button" class="track-row-delete" data-row-kind="${row.kind}" data-row-id="${this.escapeHtml(row.id)}" title="刪除「${this.escapeHtml(row.label)}」" aria-label="刪除「${this.escapeHtml(row.label)}」">×</button>` : ''}
             </div>`).join('');
         root.querySelectorAll('[data-tick]').forEach(button => button.addEventListener('click', () => this.stateManager.setTimelineTick(button.dataset.tick)));
+        root.querySelectorAll('[data-row-id]').forEach(button => button.addEventListener('click', () => this.removeTimelineRow(button.dataset.rowKind, button.dataset.rowId)));
     }
 
     escapeHtml(value) {

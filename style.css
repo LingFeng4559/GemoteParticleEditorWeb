@@ -273,13 +273,16 @@ body.app-loading::after {
 }
 .timeline-tracks { display: grid; gap: 2px; margin: 5px 0 7px; padding: 5px; background: #0b1220; border: 1px solid #26354a; border-radius: 7px; }
 .track-empty { padding: 7px; color: #7f91a8; text-align: center; font-size: 10px; }
-.track-row { min-height: 24px; display: grid; grid-template-columns: minmax(110px, 18%) 1fr; align-items: center; }
+.track-row { min-height: 24px; display: grid; grid-template-columns: minmax(110px, 18%) 1fr 24px; align-items: center; }
+.track-row.is-disabled { opacity: .48; }
 .track-label { overflow: hidden; padding: 0 8px; color: #aebed0; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .track-lane { position: relative; height: 20px; overflow: hidden; background: repeating-linear-gradient(90deg, transparent 0, transparent calc(10% - 1px), #1e293b calc(10% - 1px), #1e293b 10%); border-left: 1px solid #334155; }
 .modifier-range { position: absolute; top: 5px; height: 10px; min-width: 4px; background: rgba(14, 165, 233, .28); border: 1px solid #0284c7; border-radius: 3px; }
 .key-diamond { position: absolute; top: 3px; width: 14px !important; min-width: 14px !important; min-height: 14px !important; padding: 3px !important; background: transparent !important; border: 0 !important; border-radius: 0 !important; transform: translateX(-50%); }
 .key-diamond::after { content: ''; display: block; width: 8px; height: 8px; background: #fbbf24; border: 1px solid #fef3c7; border-radius: 1px; transform: rotate(45deg); }
 .playhead { position: absolute; inset: 0 auto 0 0; width: 1px; background: #fb7185; box-shadow: 0 0 5px #fb7185; }
+.timeline-panel .track-row-delete { width: 20px; min-width: 20px; min-height: 20px; margin-left: 3px; padding: 0; color: #fca5a5; background: transparent; border: 0; border-radius: 4px; font-size: 16px; line-height: 18px; }
+.timeline-panel .track-row-delete:hover { color: #fff; background: #7f1d2d; border-color: transparent; }
 .timeline-editor fieldset {
     min-width: 0;
     display: flex;
