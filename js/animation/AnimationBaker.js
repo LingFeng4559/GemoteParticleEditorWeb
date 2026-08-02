@@ -19,20 +19,27 @@ export function bakeParticleEvents(state, { maxCommands = 12000 } = {}) {
     const idealCommands = staticCommands + animatedIdealCommands;
     const availableAnimatedBudget = Math.max(1, maxCommands - staticCommands);
     const animatedParticlesPerFrame = animatedLayers.reduce((sum, layer) => sum + layer.particles.length, 0);
-    const maxAnimatedFrames = animatedParticlesPerFrame > 0 ? Math.floor(availableAnimatedBudget / animatedParticlesPerFrame) : 0;
-    const frameStride = maxAnimatedFrames <= 1 ? frameCount - 1 : Math.max(1, Math.ceil((frameCount - 1) / (maxAnimatedFrames - 1)));
-    const bakeStep = frameInterval * frameStride;
+    const allowedParticlesPerFrame = Number.isFinite(maxCommands)
+        ? Math.max(1, Math.floor(availableAnimatedBudget / frameCount))
+        : animatedParticlesPerFrame;
+    const particleStride = Math.max(1, Math.ceil(animatedParticlesPerFrame / Math.max(1, allowedParticlesPerFrame)));
+    const bakeStep = frameInterval;
+    const animatedLayerOffsets = new Map();
+    let animatedParticleOffset = 0;
+    for (const layer of animatedLayers) {
+        animatedLayerOffsets.set(layer.id, animatedParticleOffset);
+        animatedParticleOffset += layer.particles.length;
+    }
     const events = (state.particlePoints || []).map(point => ({ tick: 0, point, layerId: null }));
 
     for (const layer of layers) {
         const hasTimelineAnimation = layer.modifiers?.some(modifier => modifier.enabled !== false) || layer.tracks?.some(track => track.enabled !== false);
         if (hasTimelineAnimation) {
-            const finalTick = maxAnimatedFrames <= 1 ? 0 : lastFrameTick;
-            for (let tick = 0; tick <= finalTick; tick += bakeStep) {
-                for (const point of evaluateLayerParticles(layer, state.drawingGroups, tick)) events.push({ tick, point, layerId: layer.id });
-            }
-            if (finalTick > 0 && lastFrameTick % bakeStep !== 0) {
-                for (const point of evaluateLayerParticles(layer, state.drawingGroups, lastFrameTick)) events.push({ tick: lastFrameTick, point, layerId: layer.id });
+            const layerOffset = animatedLayerOffsets.get(layer.id) || 0;
+            for (let tick = 0; tick <= lastFrameTick; tick += frameInterval) {
+                evaluateLayerParticles(layer, state.drawingGroups, tick).forEach((point, index) => {
+                    if ((layerOffset + index) % particleStride === 0) events.push({ tick, point, layerId: layer.id });
+                });
             }
         } else if (state.animationEnabled && layer.isAnimated) {
             const interval = Math.max(0, Number(layer.tickInterval ?? state.animationTickInterval) || 1);
@@ -43,7 +50,7 @@ export function bakeParticleEvents(state, { maxCommands = 12000 } = {}) {
     }
     events.sort((a, b) => a.tick - b.tick);
     return {
-        events, bakeStep, frameInterval, frameCount, idealCommands, limited: idealCommands > maxCommands,
+        events, bakeStep, frameInterval, frameCount, particleStride, idealCommands, limited: idealCommands > maxCommands,
         estimatedCommands: events.length,
         estimatedBytes: events.length * 155
     };
