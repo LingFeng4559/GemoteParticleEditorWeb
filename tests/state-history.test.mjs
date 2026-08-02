@@ -32,7 +32,7 @@ test('global frame settings calculate duration and clamp the playhead', () => {
     state.setTimelineFrameSettings(5, 10);
     assert.equal(state.timelineFrameInterval, 5);
     assert.equal(state.timelineFrameCount, 10);
-    assert.equal(state.timelineDuration, 45);
+    assert.equal(state.timelineDuration, 50);
     assert.equal(state.timelineTick, 45);
 });
 
@@ -44,18 +44,18 @@ test('changing total frames retimes modifiers and keyframes to change the whole 
         tracks: [{ id: 'track', property: 'position.x', enabled: true, keyframes: [{ id: 'a', tick: 0, value: 0 }, { id: 'b', tick: 40, value: 1 }, { id: 'c', tick: 80, value: 2 }] }]
     });
     state.setTimelineFrameSettings(1, 161);
-    assert.equal(state.timelineDuration, 160);
-    assert.equal(state.drawingGroups[0].modifiers[0].duration, 160);
-    assert.equal(state.drawingGroups[0].modifiers[1].frequency, 0.25);
-    assert.deepEqual(state.drawingGroups[0].tracks[0].keyframes.map(key => key.tick), [0, 80, 160]);
+    assert.equal(state.timelineDuration, 161);
+    assert.equal(state.drawingGroups[0].modifiers[0].duration, 161);
+    assert.equal(state.drawingGroups[0].modifiers[1].frequency, 0.5 * 80 / 161);
+    assert.deepEqual(state.drawingGroups[0].tracks[0].keyframes.map(key => key.tick), [0, 80.5, 161]);
 });
 
 test('changing frame interval preserves poses per frame while extending tick duration', () => {
     const state = new StateManager();
     state.addGroup({ id: 'spin-layer', type: 'image', particles: [], modifiers: [{ id: 'spin', type: 'spin', enabled: true, duration: 80, from: 0, to: 360 }] });
     state.setTimelineFrameSettings(4, 81);
-    assert.equal(state.timelineDuration, 320);
-    assert.equal(state.drawingGroups[0].modifiers[0].duration, 320);
+    assert.equal(state.timelineDuration, 324);
+    assert.equal(state.drawingGroups[0].modifiers[0].duration, 324);
 });
 
 test('loading pre-retiming frame settings expands legacy modifier ranges to the full timeline', () => {
@@ -69,9 +69,9 @@ test('loading pre-retiming frame settings expands legacy modifier ranges to the 
             { id: 'spin', type: 'spin', enabled: true, startTick: 0, duration: 80 }
         ] }]
     });
-    assert.equal(state.timelineDuration, 216);
-    assert.deepEqual(state.drawingGroups[0].modifiers.map(modifier => modifier.duration), [216, 216, 216]);
-    assert.equal(state.timelineRetimingVersion, 1);
+    assert.equal(state.timelineDuration, 218);
+    assert.deepEqual(state.drawingGroups[0].modifiers.map(modifier => modifier.duration), [218, 218, 218]);
+    assert.equal(state.timelineRetimingVersion, 2);
 });
 
 test('solo is exclusive, reversible and cleared for newly added layers', () => {

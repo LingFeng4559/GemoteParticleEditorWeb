@@ -7,8 +7,9 @@ export function bakeParticleEvents(state, { maxCommands = 12000 } = {}) {
     );
     const frameInterval = Math.max(1, Math.round(Number(state.timelineFrameInterval) || 1));
     const legacyDuration = Math.max(1, Math.round(Number(state.timelineDuration) || 80));
-    const frameCount = Math.max(2, Math.round(Number(state.timelineFrameCount) || (Math.round(legacyDuration / frameInterval) + 1)));
-    const duration = frameInterval * (frameCount - 1);
+    const frameCount = Math.max(2, Math.round(Number(state.timelineFrameCount) || Math.round(legacyDuration / frameInterval)));
+    const duration = frameInterval * frameCount;
+    const lastFrameTick = duration - frameInterval;
     const animatedLayers = layers.filter(layer => layer.modifiers?.some(modifier => modifier.enabled !== false) || layer.tracks?.some(track => track.enabled !== false));
     const animatedIds = new Set(animatedLayers.map(layer => layer.id));
     const staticCommands = (state.particlePoints || []).length + layers
@@ -26,12 +27,12 @@ export function bakeParticleEvents(state, { maxCommands = 12000 } = {}) {
     for (const layer of layers) {
         const hasTimelineAnimation = layer.modifiers?.some(modifier => modifier.enabled !== false) || layer.tracks?.some(track => track.enabled !== false);
         if (hasTimelineAnimation) {
-            const finalTick = maxAnimatedFrames <= 1 ? 0 : duration;
+            const finalTick = maxAnimatedFrames <= 1 ? 0 : lastFrameTick;
             for (let tick = 0; tick <= finalTick; tick += bakeStep) {
                 for (const point of evaluateLayerParticles(layer, state.drawingGroups, tick)) events.push({ tick, point, layerId: layer.id });
             }
-            if (finalTick > 0 && duration % bakeStep !== 0) {
-                for (const point of evaluateLayerParticles(layer, state.drawingGroups, duration)) events.push({ tick: duration, point, layerId: layer.id });
+            if (finalTick > 0 && lastFrameTick % bakeStep !== 0) {
+                for (const point of evaluateLayerParticles(layer, state.drawingGroups, lastFrameTick)) events.push({ tick: lastFrameTick, point, layerId: layer.id });
             }
         } else if (state.animationEnabled && layer.isAnimated) {
             const interval = Math.max(0, Number(layer.tickInterval ?? state.animationTickInterval) || 1);

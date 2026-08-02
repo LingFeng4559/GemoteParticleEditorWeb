@@ -245,10 +245,10 @@ class WorkspaceShell {
         document.querySelector('[data-role="status-selection"]').textContent = selected ? `選取：${selected.name}` : '沒有選取項目';
         document.querySelector('[data-role="status-particles"]').textContent = `${particleCount.toLocaleString()} 個粒子`;
         const frameInterval = Math.max(1, Number(state.timelineFrameInterval) || 1);
-        const currentFrame = Math.min(state.timelineFrameCount || 81, Math.round((state.timelineTick || 0) / frameInterval) + 1);
-        document.querySelector('[data-role="status-time"]').textContent = `影格 ${currentFrame} / ${state.timelineFrameCount || 81} · Tick ${Math.round(state.timelineTick || 0)}`;
+        const currentFrame = Math.min(state.timelineFrameCount || 80, Math.round((state.timelineTick || 0) / frameInterval) + 1);
+        document.querySelector('[data-role="status-time"]').textContent = `影格 ${currentFrame} / ${state.timelineFrameCount || 80} · Tick ${Math.round(state.timelineTick || 0)}`;
         document.querySelector('[data-role="preview-particles"]').textContent = `${particleCount.toLocaleString()} 粒子`;
-        document.querySelector('[data-role="preview-tick"]').textContent = `影格 ${currentFrame} / ${state.timelineFrameCount || 81} · Tick ${Math.round(state.timelineTick || 0)}`;
+        document.querySelector('[data-role="preview-tick"]').textContent = `影格 ${currentFrame} / ${state.timelineFrameCount || 80} · Tick ${Math.round(state.timelineTick || 0)}`;
         document.querySelector('[data-role="mode"]').textContent = `${this.modeLabel(state.currentMode)}模式`;
         const preview = document.querySelector('[data-command="preview"]');
         preview.classList.toggle('active', !!state.timelinePlaying);

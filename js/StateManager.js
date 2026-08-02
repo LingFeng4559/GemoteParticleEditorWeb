@@ -40,8 +40,8 @@ class StateManager {
         this.head = false; // Gemote 是否從頭部高度播放
         this.timelineTick = 0;
         this.timelineFrameInterval = 1;
-        this.timelineFrameCount = 81;
-        this.timelineRetimingVersion = 1;
+        this.timelineFrameCount = 80;
+        this.timelineRetimingVersion = 2;
         this.timelineDuration = 80;
         this.timelinePlaying = false;
 
@@ -297,7 +297,8 @@ class StateManager {
 
     setTimelineTick(tick) {
         const value = Number(tick);
-        this.timelineTick = Math.max(0, Math.min(this.timelineDuration, Number.isFinite(value) ? value : 0));
+        const lastFrameTick = Math.max(0, this.timelineDuration - this.timelineFrameInterval);
+        this.timelineTick = Math.max(0, Math.min(lastFrameTick, Number.isFinite(value) ? value : 0));
         this.notify();
     }
 
@@ -305,10 +306,10 @@ class StateManager {
         const value = Number(duration);
         const requestedDuration = Math.max(1, Math.round(Number.isFinite(value) ? value : 80));
         const previousDuration = this.timelineDuration;
-        this.timelineFrameCount = Math.max(2, Math.round(requestedDuration / this.timelineFrameInterval) + 1);
-        this.timelineDuration = this.timelineFrameInterval * (this.timelineFrameCount - 1);
+        this.timelineFrameCount = Math.max(2, Math.round(requestedDuration / this.timelineFrameInterval));
+        this.timelineDuration = this.timelineFrameInterval * this.timelineFrameCount;
         this.retimeTimeline(previousDuration, this.timelineDuration);
-        this.timelineTick = Math.min(this.timelineTick, this.timelineDuration);
+        this.timelineTick = Math.min(this.timelineTick, this.timelineDuration - this.timelineFrameInterval);
         this.setUnsavedChanges(true);
         this.notify();
     }
@@ -317,9 +318,9 @@ class StateManager {
         const previousDuration = this.timelineDuration;
         this.timelineFrameInterval = Math.max(1, Math.round(Number(interval) || 1));
         this.timelineFrameCount = Math.max(2, Math.round(Number(frameCount) || 2));
-        this.timelineDuration = this.timelineFrameInterval * (this.timelineFrameCount - 1);
+        this.timelineDuration = this.timelineFrameInterval * this.timelineFrameCount;
         this.retimeTimeline(previousDuration, this.timelineDuration);
-        this.timelineTick = Math.min(this.timelineTick, this.timelineDuration);
+        this.timelineTick = Math.min(this.timelineTick, this.timelineDuration - this.timelineFrameInterval);
         this.setUnsavedChanges(true);
         this.notify();
     }
@@ -624,7 +625,7 @@ class StateManager {
         this.lastPointPosition = null;
         this.selectedGroup = null;
 
-        const needsLegacyFrameRetime = !!projectData.settings?.timelineFrameCount && Number(projectData.settings.timelineRetimingVersion || 0) < 1;
+        const needsLegacyFrameRetime = !!projectData.settings?.timelineFrameCount && Number(projectData.settings.timelineRetimingVersion || 0) < 2;
         if (projectData.settings) {
             this.drawingHeight = projectData.settings.drawingHeight || 0;
             this.planeRotation = projectData.settings.planeRotation || { x: 0, y: 0, z: 0 };
@@ -653,9 +654,9 @@ class StateManager {
             this.characterMode = projectData.settings.characterMode || 'opaque';
             const legacyDuration = Math.max(1, Number(projectData.settings.timelineDuration) || 80);
             this.timelineFrameInterval = Math.max(1, Math.round(Number(projectData.settings.timelineFrameInterval) || 1));
-            this.timelineFrameCount = Math.max(2, Math.round(Number(projectData.settings.timelineFrameCount) || (Math.round(legacyDuration / this.timelineFrameInterval) + 1)));
-            this.timelineRetimingVersion = 1;
-            this.timelineDuration = this.timelineFrameInterval * (this.timelineFrameCount - 1);
+            this.timelineFrameCount = Math.max(2, Math.round(Number(projectData.settings.timelineFrameCount) || Math.round(legacyDuration / this.timelineFrameInterval)));
+            this.timelineRetimingVersion = 2;
+            this.timelineDuration = this.timelineFrameInterval * this.timelineFrameCount;
         } else {
             this.animationEnabled = false;
             this.animationTickInterval = 1;
@@ -674,8 +675,8 @@ class StateManager {
             this.particleDensity = 1.0;
             this.characterMode = 'opaque';
             this.timelineFrameInterval = 1;
-            this.timelineFrameCount = 81;
-            this.timelineRetimingVersion = 1;
+            this.timelineFrameCount = 80;
+            this.timelineRetimingVersion = 2;
             this.timelineDuration = 80;
         }
         this.timelineTick = 0;

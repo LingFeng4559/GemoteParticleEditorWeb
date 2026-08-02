@@ -24,7 +24,7 @@ class TimelinePanel {
                 <input data-role="scrubber" type="range" min="0" max="80" value="0" step="1">
                 <input data-role="tick" type="number" min="0" value="0"><span>tick</span>
                 <label>影像間隔 <input data-role="frame-interval" type="number" min="1" value="1"></label><span>tick</span>
-                <label>總影像格數 <input data-role="frame-count" type="number" min="2" value="81"></label>
+                <label>總影像格數 <input data-role="frame-count" type="number" min="2" value="80"></label>
                 <span class="timeline-total">總長 <strong data-role="duration">80</strong> tick</span>
             </div>
             <div class="timeline-tracks" data-role="tracks" aria-label="關鍵影格軌道"></div>
@@ -258,10 +258,10 @@ class TimelinePanel {
         const layer = state.drawingGroups.find(item => item.id === state.selectedGroup?.id);
         this.root.querySelector('[data-role="selection"]').textContent = layer ? `編輯：${layer.name}` : '請選取圖層';
         this.controlsRoot.style.opacity = layer ? '1' : '.45';
-        this.root.querySelector('[data-role="scrubber"]').max = state.timelineDuration;
+        this.root.querySelector('[data-role="scrubber"]').max = Math.max(0, state.timelineDuration - state.timelineFrameInterval);
         this.root.querySelector('[data-role="scrubber"]').step = state.timelineFrameInterval;
         this.root.querySelector('[data-role="scrubber"]').value = state.timelineTick;
-        this.root.querySelector('[data-role="tick"]').max = state.timelineDuration;
+        this.root.querySelector('[data-role="tick"]').max = Math.max(0, state.timelineDuration - state.timelineFrameInterval);
         this.root.querySelector('[data-role="tick"]').step = state.timelineFrameInterval;
         this.root.querySelector('[data-role="tick"]').value = Math.round(state.timelineTick * 10) / 10;
         this.root.querySelector('[data-role="frame-interval"]').value = state.timelineFrameInterval;
