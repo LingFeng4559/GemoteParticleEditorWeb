@@ -41,29 +41,39 @@ html, body {
 
 body.app-loading > * { visibility: hidden; }
 body.app-loading::before {
-    content: 'G';
+    content: '';
     position: fixed;
     left: 50%; top: 45%;
     z-index: 10000;
-    display: grid;
-    width: 48px; height: 48px;
-    place-items: center;
-    color: #082f49;
-    background: #38bdf8;
-    border-radius: 12px;
-    font: 800 22px var(--font-family);
+    width: 58px; height: 58px;
+    border: 2px solid rgba(56, 189, 248, .16);
+    border-top-color: #38bdf8;
+    border-right-color: #22d3ee;
+    border-radius: 50%;
+    box-shadow: 0 0 28px rgba(56, 189, 248, .18), inset 0 0 18px rgba(56, 189, 248, .08);
     visibility: visible;
     transform: translate(-50%, -50%);
+    animation: app-loader-orbit .9s linear infinite;
 }
 body.app-loading::after {
-    content: '正在還原粒子專案…';
+    content: '';
     position: fixed;
-    left: 50%; top: calc(45% + 44px);
+    left: 50%; top: 45%;
     z-index: 10000;
-    color: #94a3b8;
-    font: 11px var(--font-family);
+    width: 10px; height: 10px;
+    background: #7dd3fc;
+    border-radius: 50%;
+    box-shadow: -18px 0 0 -2px #0ea5e9, 18px 0 0 -2px #22d3ee, 0 0 16px #38bdf8;
     visibility: visible;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
+    animation: app-loader-pulse .9s ease-in-out infinite alternate;
+}
+
+@keyframes app-loader-orbit { to { transform: translate(-50%, -50%) rotate(360deg); } }
+@keyframes app-loader-pulse { from { opacity: .45; transform: translate(-50%, -50%) scale(.72); } to { opacity: 1; transform: translate(-50%, -50%) scale(1.15); } }
+
+@media (prefers-reduced-motion: reduce) {
+    body.app-loading::before, body.app-loading::after { animation-duration: 1.8s; }
 }
 
 #scene-canvas {

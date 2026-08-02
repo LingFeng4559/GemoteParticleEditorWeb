@@ -280,10 +280,10 @@ class WorkspaceShell {
     applyLanguage() {
         const text = (selector, key) => { const element = document.querySelector(selector); if (element) element.textContent = lang.get(key); };
         const title = (selector, key) => { const element = document.querySelector(selector); if (element) { element.title = lang.get(key); element.setAttribute('aria-label', lang.get(key)); } };
-        text('[data-workspace="draw"]', 'workspace_draw');
-        text('[data-workspace="animate"]', 'workspace_animate');
-        text('[data-workspace="preview"]', 'workspace_preview');
-        text('[data-workspace="export"]', 'workspace_export');
+        text('.workspace-switcher [data-workspace="draw"]', 'workspace_draw');
+        text('.workspace-switcher [data-workspace="animate"]', 'workspace_animate');
+        text('.workspace-switcher [data-workspace="preview"]', 'workspace_preview');
+        text('.workspace-switcher [data-workspace="export"]', 'workspace_export');
         text('[data-command="save"]', 'save_project');
         text('[data-command="export"]', 'workspace_export_yml');
         title('[data-command="undo"]', 'undo');

@@ -454,4 +454,10 @@ class App {
     }
 }
 
-new App();
+try {
+    new App();
+} catch (error) {
+    console.error('[App] Initialization failed:', error);
+} finally {
+    requestAnimationFrame(() => document.body.classList.remove('app-loading'));
+}
