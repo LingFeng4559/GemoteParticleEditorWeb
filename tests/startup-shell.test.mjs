@@ -35,3 +35,11 @@ test('topbar project name supports inline editing and uses the canonical state f
     assert.match(workspace, /stateManager\.setProjectName\(name\)/);
     assert.match(workspace, /state\.currentProjectName \|\| lang\.get\('unnamed_project'\)/);
 });
+
+test('project name display and editor occupy the same fixed layout slot', async () => {
+    const css = await readFile(new URL('../style.css', import.meta.url), 'utf8');
+    assert.match(css, /\.app-identity > div[^}]*height:\s*36px[^}]*grid-template-rows:\s*16px 20px/);
+    assert.match(css, /\.project-name-button\[hidden\][^}]*display:\s*none\s*!important/);
+    assert.match(css, /\.project-name-button[^}]*height:\s*20px/);
+    assert.match(css, /\.project-name-editor[^}]*height:\s*20px/);
+});

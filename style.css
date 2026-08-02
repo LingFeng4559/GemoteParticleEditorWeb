@@ -1169,7 +1169,7 @@ input[type="range"]:hover::-webkit-slider-thumb { background-color: var(--primar
 }
 
 .app-identity { display: flex; align-items: center; gap: 9px; min-width: 0; }
-.app-identity > div { min-width: 0; display: grid; line-height: 1.2; }
+.app-identity > div { min-width: 0; height: 36px; display: grid; grid-template-rows: 16px 20px; line-height: 1.2; }
 .app-identity strong { overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
 .app-identity small { overflow: hidden; color: #7f8fa3; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .app-mark { display: grid; width: 30px; height: 30px; place-items: center; color: #082f49; background: #38bdf8; border-radius: 7px; font-weight: 800; }
@@ -1179,7 +1179,8 @@ input[type="range"]:hover::-webkit-slider-thumb { background-color: var(--primar
 #workspace-topbar .project-name-button {
     display: block;
     max-width: 180px;
-    padding: 1px 4px;
+    height: 20px;
+    padding: 0 4px;
     overflow: hidden;
     color: #7f8fa3;
     border: 1px solid transparent;
@@ -1189,12 +1190,14 @@ input[type="range"]:hover::-webkit-slider-thumb { background-color: var(--primar
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+#workspace-topbar .project-name-button[hidden] { display: none !important; }
 #workspace-topbar .project-name-button:hover { color: #bae6fd; border-color: #334155; background: #172033; }
 .project-name-editor {
     width: 180px;
     min-width: 0;
-    height: 22px;
-    padding: 1px 5px;
+    height: 20px;
+    box-sizing: border-box;
+    padding: 0 5px;
     color: #e2e8f0;
     background: #0f172a;
     border: 1px solid #38bdf8;
