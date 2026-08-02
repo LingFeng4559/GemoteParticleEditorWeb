@@ -1,25 +1,37 @@
 import { createThumbnailBlob, ImageAssetStore } from './ImageAssetStore.js';
+import lang from '../LanguageManager.js';
 
 class AssetLibraryPanel {
     constructor(anchor, onImport) {
         this.store = new ImageAssetStore();
         this.onImport = onImport;
         this.assets = [];
+        this.loaded = false;
         this.objectUrls = [];
         this.build(anchor);
         this.refresh();
+        window.addEventListener('languageChanged', () => this.applyLanguage());
     }
 
     build(anchor) {
         this.root = document.createElement('div');
         this.root.className = 'asset-library';
-        this.root.innerHTML = `<div class="asset-toolbar"><strong>素材庫</strong><input type="search" placeholder="搜尋素材"><button type="button" data-action="clear">清空</button></div><div class="asset-summary">載入中…</div><div class="asset-grid"></div>`;
+        this.root.innerHTML = `<div class="asset-toolbar"><strong></strong><input type="search"><button type="button" data-action="clear"></button></div><div class="asset-summary"></div><div class="asset-grid"></div>`;
         anchor?.insertAdjacentElement('afterend', this.root);
+        this.applyLanguage();
         this.root.querySelector('input').addEventListener('input', () => this.render());
         this.root.querySelector('[data-action="clear"]').addEventListener('click', async () => {
-            if (!confirm('確定清空瀏覽器素材庫？專案內已建立的粒子圖層不受影響。')) return;
+            if (!confirm(lang.get('asset_clear_confirm'))) return;
             await this.store.clear(); await this.refresh();
         });
+    }
+
+    applyLanguage() {
+        this.root.querySelector('.asset-toolbar strong').textContent = lang.get('asset_library');
+        this.root.querySelector('input').placeholder = lang.get('asset_search_placeholder');
+        this.root.querySelector('[data-action="clear"]').textContent = lang.get('asset_clear');
+        if (this.loaded) this.render();
+        else this.root.querySelector('.asset-summary').textContent = lang.get('asset_loading');
     }
 
     async addFiles(files) {
@@ -29,7 +41,7 @@ class AssetLibraryPanel {
             const image = await createThumbnailBlob(file);
             await this.store.put({ id, name: file.name, type: file.type, size: file.size, updatedAt: Date.now(), blob: file, ...image });
             completed++;
-            this.root.querySelector('.asset-summary').textContent = `正在保存 ${completed}/${files.length}`;
+            this.root.querySelector('.asset-summary').textContent = lang.get('asset_saving', { completed, total: files.length });
         }
         await this.refresh();
     }
@@ -37,9 +49,10 @@ class AssetLibraryPanel {
     async refresh() {
         try {
             this.assets = (await this.store.list()).sort((a, b) => b.updatedAt - a.updatedAt);
+            this.loaded = true;
             this.render();
         } catch (error) {
-            this.root.querySelector('.asset-summary').textContent = `素材庫無法使用：${error.message}`;
+            this.root.querySelector('.asset-summary').textContent = lang.get('asset_unavailable', { message: error.message });
         }
     }
 
@@ -47,7 +60,7 @@ class AssetLibraryPanel {
         this.objectUrls.forEach(url => URL.revokeObjectURL(url)); this.objectUrls = [];
         const query = this.root.querySelector('input').value.trim().toLowerCase();
         const assets = this.assets.filter(asset => asset.name.toLowerCase().includes(query));
-        this.root.querySelector('.asset-summary').textContent = `${assets.length}/${this.assets.length} 個素材`;
+        this.root.querySelector('.asset-summary').textContent = lang.get('asset_count', { shown: assets.length, total: this.assets.length });
         const grid = this.root.querySelector('.asset-grid'); grid.replaceChildren();
         for (const asset of assets) {
             const card = document.createElement('button'); card.type = 'button'; card.className = 'asset-card'; card.title = `${asset.name}｜${asset.width}×${asset.height}`;
@@ -55,7 +68,7 @@ class AssetLibraryPanel {
             card.innerHTML = `<img alt=""><span></span><small>${asset.width}×${asset.height}</small>`;
             card.querySelector('img').src = url; card.querySelector('span').textContent = asset.name;
             card.addEventListener('click', () => this.onImport(new File([asset.blob], asset.name, { type: asset.type, lastModified: asset.updatedAt })));
-            card.addEventListener('contextmenu', async event => { event.preventDefault(); if (confirm(`刪除素材 ${asset.name}？`)) { await this.store.delete(asset.id); await this.refresh(); } });
+            card.addEventListener('contextmenu', async event => { event.preventDefault(); if (confirm(lang.get('asset_delete_confirm', { name: asset.name }))) { await this.store.delete(asset.id); await this.refresh(); } });
             grid.appendChild(card);
         }
     }

@@ -10,6 +10,9 @@ class CodeGenerator {
         this.qualitySelect = document.querySelector('#export-quality');
         this.commandLimitInput = document.querySelector('#export-command-limit');
         this.estimateOutput = document.querySelector('#export-estimate');
+        window.addEventListener('languageChanged', () => {
+            if (this.lastEstimate) this.renderEstimate(this.lastEstimate.baked, this.lastEstimate.limit);
+        });
     }
 
     generate() {
@@ -69,10 +72,15 @@ class CodeGenerator {
 
     renderEstimate(baked, limit) {
         if (!this.estimateOutput) return;
+        this.lastEstimate = { baked, limit };
         const size = baked.estimatedBytes < 1048576
             ? `${(baked.estimatedBytes / 1024).toFixed(1)} KB`
             : `${(baked.estimatedBytes / 1048576).toFixed(2)} MB`;
-        this.estimateOutput.textContent = `${baked.estimatedCommands.toLocaleString()} 指令｜約 ${size}｜取樣 ${baked.bakeStep} tick${baked.limited ? `｜原始 ${baked.idealCommands.toLocaleString()}，已依 ${limit.toLocaleString()} 上限降採樣` : ''}`;
+        this.estimateOutput.textContent = lang.get('export_estimate', {
+            commands: baked.estimatedCommands.toLocaleString(), size, step: baked.bakeStep
+        }) + (baked.limited ? lang.get('export_estimate_limited', {
+            ideal: baked.idealCommands.toLocaleString(), limit: limit.toLocaleString(), stride: baked.particleStride
+        }) : '');
         this.estimateOutput.dataset.status = baked.limited ? 'warning' : 'success';
     }
 

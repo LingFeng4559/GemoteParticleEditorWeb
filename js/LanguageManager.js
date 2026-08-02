@@ -34,6 +34,7 @@ class LanguageManager {
     }
 
     updateUI() {
+        document.documentElement.lang = { en: 'en', zh_tw: 'zh-Hant', zh_cn: 'zh-Hans' }[this.currentLang] || this.currentLang;
         // 更新所有帶有 data-i18n 屬性的元素
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.dataset.i18n;

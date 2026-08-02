@@ -158,10 +158,10 @@ class WorkspaceShell {
             const file = [...event.dataTransfer.files].find(item => /\.ya?ml$/i.test(item.name));
             if (!file) {
                 dropzone.classList.add('has-error');
-                dropzone.querySelector('strong').textContent = '請拖入 .yml 或 .yaml 檔案';
+                dropzone.querySelector('strong').textContent = lang.get('yml_drop_invalid');
                 window.setTimeout(() => {
                     dropzone.classList.remove('has-error');
-                    dropzone.querySelector('strong').textContent = '也可以把 YML 拖曳到這裡';
+                    dropzone.querySelector('strong').textContent = lang.get('yml_drop_prompt');
                 }, 1800);
                 return;
             }
@@ -229,7 +229,7 @@ class WorkspaceShell {
         const button = panel.querySelector('[data-action="collapse"]');
         if (!button) return;
         button.textContent = collapsed ? '⌃' : '⌄';
-        button.title = collapsed ? '展開時間軸' : '收合時間軸';
+        button.title = lang.get(collapsed ? 'timeline_expand' : 'timeline_collapse');
         button.setAttribute('aria-expanded', String(!collapsed));
     }
 
@@ -242,7 +242,7 @@ class WorkspaceShell {
         const selected = (state.drawingGroups || []).find(layer => layer.id === state.selectedGroup?.id);
         document.body.classList.toggle('has-layer-selection', !!selected);
         const particleCount = (state.particlePoints || []).length + (state.drawingGroups || []).reduce((sum, layer) => sum + (layer.particles?.length || 0), 0);
-        document.querySelector('[data-role="project-name"]').textContent = state.projectName || '未命名專案';
+        document.querySelector('[data-role="project-name"]').textContent = state.projectName || lang.get('unnamed_project');
         const inspectorTitle = this.workspace === 'draw' ? lang.get('workspace_tool_settings')
             : this.workspace === 'export' ? lang.get('workspace_export_settings')
                 : selected?.name || lang.get('workspace_no_layer');
@@ -250,10 +250,10 @@ class WorkspaceShell {
         const context = document.querySelector('[data-role="selection-context"]');
         context.classList.toggle('has-selection', !!selected);
         context.innerHTML = this.workspace === 'draw'
-            ? '<span class="context-icon">✎</span><div><strong>新筆畫設定</strong><p>下方粒子、鏡像與參考模型設定會套用到接下來的繪製。</p></div>'
+            ? `<span class="context-icon">✎</span><div><strong>${lang.get('inspector_new_stroke_title')}</strong><p>${lang.get('inspector_new_stroke_description')}</p></div>`
             : selected
-            ? `<span class="context-icon">${selected.type === 'group' ? '▣' : '◆'}</span><div><strong>${selected.type === 'group' ? '群組' : '粒子圖層'}</strong><p>${selected.particles?.length || 0} 個粒子 · ${selected.locked ? '已鎖定' : '可編輯'}</p></div>`
-            : '<span class="context-icon">◇</span><div><strong>選取一個圖層</strong><p>從圖層面板或 3D 視窗選取內容後，在這裡編輯屬性與動畫。</p></div>';
+            ? `<span class="context-icon">${selected.type === 'group' ? '▣' : '◆'}</span><div><strong>${lang.get(selected.type === 'group' ? 'inspector_group' : 'inspector_particle_layer')}</strong><p>${lang.get('inspector_particle_summary', { count: selected.particles?.length || 0, state: lang.get(selected.locked ? 'inspector_locked' : 'inspector_editable') })}</p></div>`
+            : `<span class="context-icon">◇</span><div><strong>${lang.get('inspector_select_title')}</strong><p>${lang.get('inspector_select_description')}</p></div>`;
         document.querySelector('[data-role="status-selection"]').textContent = selected ? lang.get('workspace_selected', { name: selected.name }) : lang.get('workspace_no_selection');
         document.querySelector('[data-role="status-particles"]').textContent = lang.get('workspace_particle_count', { count: particleCount.toLocaleString() });
         const frameInterval = Math.max(1, Number(state.timelineFrameInterval) || 1);

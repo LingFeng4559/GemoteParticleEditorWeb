@@ -112,48 +112,48 @@
 
         <!-- 圖層與群組 -->
         <div class="section" data-section="layers">
-            <h3 class="section-title"><span>圖層與群組</span> <span class="collapse-arrow">▾</span></h3>
+            <h3 class="section-title"><span data-i18n="layers_groups">圖層與群組</span> <span class="collapse-arrow">▾</span></h3>
             <div class="section-content">
                 <div class="layer-toolbar">
-                    <button id="btn-add-layer-group" class="secondary-btn" type="button">＋ 新增群組</button>
-                    <span class="layer-toolbar-hint">雙擊名稱可重新命名</span>
+                    <button id="btn-add-layer-group" class="secondary-btn" type="button" data-i18n="add_group">＋ 新增群組</button>
+                    <span class="layer-toolbar-hint" data-i18n="rename_hint">雙擊名稱可重新命名</span>
                 </div>
-                <div id="layer-tree" class="layer-tree empty">尚無圖層；繪製或匯入圖片後會顯示於此。</div>
+                <div id="layer-tree" class="layer-tree empty" data-i18n="layer_empty">尚無圖層；繪製或匯入圖片後會顯示於此。</div>
             </div>
         </div>
 
         <!-- 圖片粒子 -->
         <div class="section" data-section="image-particles">
-            <h3 class="section-title"><span>圖片粒子</span> <span class="collapse-arrow">▾</span></h3>
+            <h3 class="section-title"><span data-i18n="image_particles">圖片粒子</span> <span class="collapse-arrow">▾</span></h3>
             <div class="section-content">
                 <input id="image-file-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
                 <input id="image-folder-input" type="file" accept="image/*" webkitdirectory multiple hidden>
                 <div class="button-grid">
-                    <button id="btn-import-images" class="primary-btn" type="button">載入圖片</button>
-                    <button id="btn-import-image-folder" class="secondary-btn" type="button">載入資料夾</button>
+                    <button id="btn-import-images" class="primary-btn" type="button" data-i18n="load_images">載入圖片</button>
+                    <button id="btn-import-image-folder" class="secondary-btn" type="button" data-i18n="load_folder">載入資料夾</button>
                 </div>
                 <div class="image-import-grid">
-                    <label>轉換寬度（0＝原圖）<input id="image-output-width" type="number" min="0" max="1024" value="0"></label>
-                    <label>透明門檻<input id="image-alpha-threshold" type="number" min="0" max="255" value="16"></label>
-                    <label>取樣間隔<input id="image-sample-step" type="number" min="1" max="16" value="1"></label>
-                    <label>顏色模式
-                        <select id="image-color-mode"><option value="single" selected>目前粒子設定</option><option value="source">原圖顏色</option></select>
+                    <label><span data-i18n="conversion_width">轉換寬度（0＝原圖）</span><input id="image-output-width" type="number" min="0" max="1024" value="0"></label>
+                    <label><span data-i18n="alpha_threshold">透明門檻</span><input id="image-alpha-threshold" type="number" min="0" max="255" value="16"></label>
+                    <label><span data-i18n="sample_interval">取樣間隔</span><input id="image-sample-step" type="number" min="1" max="16" value="1"></label>
+                    <label><span data-i18n="color_mode">顏色模式</span>
+                        <select id="image-color-mode"><option value="single" selected data-i18n="current_particle_settings">目前粒子設定</option><option value="source" data-i18n="source_colors">原圖顏色</option></select>
                     </label>
                 </div>
                 <div id="image-placement" class="image-placement" hidden>
-                    <div class="image-placement-header"><img id="image-placement-thumbnail" alt="待轉換圖片"><div><strong id="image-placement-name">尚未選擇圖片</strong><small>先校正位置與大小，再確認轉換</small></div></div>
+                    <div class="image-placement-header"><img id="image-placement-thumbnail" alt=""><div><strong id="image-placement-name" data-i18n="image_none_selected">尚未選擇圖片</strong><small data-i18n="image_adjust_first">先校正位置與大小，再確認轉換</small></div></div>
                     <div class="image-position-grid">
-                        <label>水平位置<input id="image-position-x" type="number" step="0.1" value="0"></label>
-                        <label>垂直位置<input id="image-position-y" type="number" step="0.1" value="0"></label>
-                        <label class="image-size-field">圖片寬度（格）<input id="image-world-width" type="number" min="0.1" max="100" step="0.1" value="4"></label>
+                        <label><span data-i18n="horizontal_position">水平位置</span><input id="image-position-x" type="number" step="0.1" value="0"></label>
+                        <label><span data-i18n="vertical_position">垂直位置</span><input id="image-position-y" type="number" step="0.1" value="0"></label>
+                        <label class="image-size-field"><span data-i18n="image_width_blocks">圖片寬度（格）</span><input id="image-world-width" type="number" min="0.1" max="100" step="0.1" value="4"></label>
                     </div>
-                    <small class="image-placement-tip">左鍵點擊／拖曳：選擇 XZ 位置<br>圖片大小請輸入「圖片寬度（格）」</small>
+                    <small class="image-placement-tip" data-i18n="image_placement_tip">左鍵點擊／拖曳：選擇 XZ 位置；圖片大小請輸入「圖片寬度（格）」</small>
                     <div class="image-placement-actions">
-                        <button id="btn-confirm-image-conversion" class="primary-btn" type="button">確認轉換粒子</button>
-                        <button id="btn-cancel-image-placement" class="secondary-btn" type="button">取消</button>
+                        <button id="btn-confirm-image-conversion" class="primary-btn" type="button" data-i18n="confirm_particle_conversion">確認轉換粒子</button>
+                        <button id="btn-cancel-image-placement" class="secondary-btn" type="button" data-i18n="cancel">取消</button>
                     </div>
                 </div>
-                <div id="image-import-status" class="image-import-status">步驟 1：載入圖片。圖片不會立即轉成粒子。</div>
+                <div id="image-import-status" class="image-import-status" data-i18n="image_status_step1">步驟 1：載入圖片。圖片不會立即轉成粒子。</div>
             </div>
         </div>
 
@@ -242,11 +242,11 @@
         <div class="section collapsed" data-section="actions-output">
             <h3 class="section-title"><span data-i18n="actions_output">操作與輸出</span> <span class="collapse-arrow">▸</span></h3>
             <div class="section-content">
-                <div class="button-grid"><button id="btn-undo" class="secondary-btn" data-i18n="undo">上一步</button><button id="btn-redo" class="secondary-btn">重做</button><button id="btn-clear" class="secondary-btn" data-i18n="clear_canvas">清除畫布</button></div>
-                <div class="control-row" style="margin-top:8px"><label>匯出品質</label><select id="export-quality"><option value="all" selected>全部（完整取樣）</option><option value="50000">最高品質</option><option value="12000">平衡</option><option value="5000">伺服器安全</option><option value="custom">自訂</option></select></div>
-                <div class="control-row"><label>指令上限</label><input id="export-command-limit" type="number" min="100" max="200000" value="12000" disabled></div>
-                <button id="btn-estimate-export" class="secondary-btn" type="button">估算匯出負載</button>
-                <div id="export-estimate" class="image-import-status">尚未估算</div>
+                <div class="button-grid"><button id="btn-undo" class="secondary-btn" data-i18n="undo">上一步</button><button id="btn-redo" class="secondary-btn" data-i18n="redo">重做</button><button id="btn-clear" class="secondary-btn" data-i18n="clear_canvas">清除畫布</button></div>
+                <div class="control-row" style="margin-top:8px"><label data-i18n="export_quality">匯出品質</label><select id="export-quality"><option value="all" selected data-i18n="quality_all">全部（完整取樣）</option><option value="50000" data-i18n="quality_highest">最高品質</option><option value="12000" data-i18n="quality_balanced">平衡</option><option value="5000" data-i18n="quality_server_safe">伺服器安全</option><option value="custom" data-i18n="quality_custom">自訂</option></select></div>
+                <div class="control-row"><label data-i18n="command_limit">指令上限</label><input id="export-command-limit" type="number" min="100" max="200000" value="12000" disabled></div>
+                <button id="btn-estimate-export" class="secondary-btn" type="button" data-i18n="estimate_export">估算匯出負載</button>
+                <div id="export-estimate" class="image-import-status" data-i18n="not_estimated">尚未估算</div>
                 <div class="button-grid" style="margin-top: 8px;"><button id="btn-generate" class="primary-btn" data-i18n="generate_code">生成程式碼</button><button id="btn-copy-code" class="secondary-btn" data-i18n="copy_code">複製</button></div>
                 <textarea id="code-output" rows="5" readonly style="margin-top: 8px;" data-i18n-placeholder="code_placeholder"></textarea>
             </div>

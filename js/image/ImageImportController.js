@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { convertImageDataToParticles } from './ImageParticleConverter.js';
 import AssetLibraryPanel from './AssetLibraryPanel.js';
+import lang from '../LanguageManager.js';
 
 class ImageImportController {
     constructor(stateManager, sceneManager, elements) {
@@ -11,6 +12,10 @@ class ImageImportController {
         this.workerRequests = new Map();
         this.setupEvents();
         this.stateManager.subscribe(() => this.updatePreviewTransform());
+        window.addEventListener('languageChanged', () => {
+            if (!this.currentFile) this.setStatus(lang.get('image_status_step1'));
+            else this.setStatus(lang.get('image_status_step2'));
+        });
     }
 
     setupEvents() {
@@ -120,22 +125,22 @@ class ImageImportController {
     async prepareFiles(fileList, { storeAssets = true } = {}) {
         const files = Array.from(fileList || []).filter(file => file.type.startsWith('image/'));
         if (!files.length) {
-            this.setStatus('沒有找到可讀取的圖片。', 'error');
+            this.setStatus(lang.get('image_no_readable'), 'error');
             return false;
         }
         if (storeAssets) {
             try { await this.assetLibrary.addFiles(files); }
-            catch (error) { this.setStatus(`素材庫：${error.message}`, 'warning'); }
+            catch (error) { this.setStatus(lang.get('image_library_error', { message: error.message }), 'warning'); }
         }
         try {
             await this.prepareFile(files[0]);
         } catch (error) {
             console.error('[ImagePlacement]', error);
             this.cancelPlacement({ preserveStatus: true });
-            this.setStatus(`無法建立圖片預覽：${error.message}`, 'error');
+            this.setStatus(lang.get('image_preview_error', { message: error.message }), 'error');
             return false;
         }
-        if (files.length > 1) this.setStatus(`已載入 ${files[0].name}；請逐張確認位置後轉換。`, 'warning');
+        if (files.length > 1) this.setStatus(lang.get('image_loaded_multiple', { name: files[0].name }), 'warning');
         return true;
     }
 
@@ -151,7 +156,7 @@ class ImageImportController {
         this.elements.placement.hidden = false;
         this.elements.positionX.value = '0';
         this.elements.positionY.value = '0';
-        this.setStatus('步驟 2：左鍵選擇 XZ 位置；以數值調整圖片寬度。');
+        this.setStatus(lang.get('image_status_step2'));
         await this.createPreviewMesh();
     }
 
@@ -215,17 +220,17 @@ class ImageImportController {
     async confirmConversion() {
         if (!this.currentFile) return false;
         this.elements.confirmButton.disabled = true;
-        this.setStatus('正在依照目前構圖轉換粒子…');
+        this.setStatus(lang.get('image_converting'));
         try {
             const imageData = await this.decodeFile(this.currentFile, this.elements.outputWidth?.value);
             const options = this.getOptions(imageData);
             const estimatedSamples = Math.ceil(imageData.width / options.sampleStep) * Math.ceil(imageData.height / options.sampleStep);
-            if (estimatedSamples > 500000 && !confirm(`原圖將取樣約 ${estimatedSamples.toLocaleString()} 個像素，可能需要較長時間。確定繼續嗎？`)) {
-                this.setStatus('已保留圖片構圖；可提高取樣間隔後再轉換。', 'warning');
+            if (estimatedSamples > 500000 && !confirm(lang.get('image_large_confirm', { count: estimatedSamples.toLocaleString() }))) {
+                this.setStatus(lang.get('image_layout_kept'), 'warning');
                 return false;
             }
             const result = await this.convertAsync(imageData, options);
-            if (!result.particles.length) throw new Error('沒有像素通過目前的透明度門檻');
+            if (!result.particles.length) throw new Error(lang.get('image_no_pixels'));
             const horizontal = Number(this.elements.positionX?.value) || 0;
             const vertical = Number(this.elements.positionY?.value) || 0;
             const { planeToWorld } = this.sceneManager.getDrawingPlaneInfo();
@@ -251,12 +256,12 @@ class ImageImportController {
             });
             this.stateManager.setSelectedGroup({ id });
             this.stateManager.setMode('select');
-            this.setStatus(`轉換完成：${particles.length.toLocaleString()} 個粒子。`, 'success');
+            this.setStatus(lang.get('image_complete', { count: particles.length.toLocaleString() }), 'success');
             this.cancelPlacement({ preserveStatus: true });
             return true;
         } catch (error) {
             console.error('[ImageImport]', error);
-            this.setStatus(`圖片轉換失敗：${error.message}`, 'error');
+            this.setStatus(lang.get('image_failed', { message: error.message }), 'error');
             return false;
         } finally {
             this.elements.confirmButton.disabled = false;
@@ -280,7 +285,7 @@ class ImageImportController {
         if (this.elements.placement) this.elements.placement.hidden = true;
         if (this.elements.imageInput) this.elements.imageInput.value = '';
         if (this.elements.folderInput) this.elements.folderInput.value = '';
-        if (!preserveStatus) this.setStatus('步驟 1：載入圖片。圖片不會立即轉成粒子。');
+        if (!preserveStatus) this.setStatus(lang.get('image_status_step1'));
     }
 
     importFiles(fileList, options) {

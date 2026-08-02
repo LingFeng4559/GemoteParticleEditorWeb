@@ -1,4 +1,5 @@
 import { isLayerContainer } from './LayerModel.js';
+import lang from './LanguageManager.js';
 
 class LayerPanel {
     constructor(stateManager, container, addGroupButton) {
@@ -6,6 +7,10 @@ class LayerPanel {
         this.container = container;
         this.addGroupButton = addGroupButton;
         this.setupEvents();
+        window.addEventListener('languageChanged', () => {
+            this.lastRenderSignature = null;
+            this.update(this.stateManager.getState());
+        });
     }
 
     setupEvents() {
@@ -28,10 +33,10 @@ class LayerPanel {
         if (action === 'lock') this.stateManager.updateLayerState(layerId, { locked: !layer.locked });
         if (action === 'solo') this.stateManager.toggleLayerSolo(layerId);
         if (action === 'rename') {
-            const name = window.prompt('圖層名稱', layer.name);
+            const name = window.prompt(lang.get('layer_name_prompt'), layer.name);
             if (name?.trim()) this.stateManager.updateLayerState(layerId, { name: name.trim() });
         }
-        if (action === 'delete' && window.confirm(`刪除「${layer.name}」及其所有子圖層？`)) {
+        if (action === 'delete' && window.confirm(lang.get('layer_delete_confirm', { name: layer.name }))) {
             this.stateManager.removeGroup(layerId);
         }
     }
@@ -72,25 +77,25 @@ class LayerPanel {
             this.stateManager.moveLayer(sourceId, layer.id, isLayerContainer(layer) ? 'inside' : 'before');
         });
 
-        const expand = this.createButton('expand', hasChildren ? (layer.expanded ? '▾' : '▸') : '·', '展開或收合群組');
+        const expand = this.createButton('expand', hasChildren ? (layer.expanded ? '▾' : '▸') : '·', lang.get('layer_expand'));
         expand.disabled = !hasChildren;
         row.appendChild(expand);
 
-        const name = this.createButton('select', '', '選取圖層');
+        const name = this.createButton('select', '', lang.get('layer_select'));
         name.className = 'layer-name-btn';
         name.textContent = `${isLayerContainer(layer) ? '▣' : '◆'} ${layer.name}`;
         name.addEventListener('dblclick', event => {
             event.stopPropagation();
-            const renamed = window.prompt('圖層名稱', layer.name);
+            const renamed = window.prompt(lang.get('layer_name_prompt'), layer.name);
             if (renamed?.trim()) this.stateManager.updateLayerState(layer.id, { name: renamed.trim() });
         });
         row.appendChild(name);
 
-        row.appendChild(this.createButton('visible', layer.visible ? '◉' : '○', layer.visible ? '在 Viewport 隱藏' : '在 Viewport 顯示', layer.visible));
-        row.appendChild(this.createButton('export', layer.exportEnabled ? '↥' : '—', layer.exportEnabled ? '從匯出中排除' : '加入匯出', layer.exportEnabled));
-        row.appendChild(this.createButton('lock', layer.locked ? '🔒' : '🔓', layer.locked ? '解除鎖定' : '鎖定圖層', layer.locked));
-        row.appendChild(this.createButton('solo', 'S', '只顯示此圖層', layer.solo));
-        row.appendChild(this.createButton('delete', '×', '刪除圖層'));
+        row.appendChild(this.createButton('visible', layer.visible ? '◉' : '○', lang.get(layer.visible ? 'layer_hide' : 'layer_show'), layer.visible));
+        row.appendChild(this.createButton('export', layer.exportEnabled ? '↥' : '—', lang.get(layer.exportEnabled ? 'layer_exclude_export' : 'layer_include_export'), layer.exportEnabled));
+        row.appendChild(this.createButton('lock', layer.locked ? '🔒' : '🔓', lang.get(layer.locked ? 'layer_unlock' : 'layer_lock'), layer.locked));
+        row.appendChild(this.createButton('solo', 'S', lang.get('layer_solo'), layer.solo));
+        row.appendChild(this.createButton('delete', '×', lang.get('layer_delete')));
 
         row.querySelectorAll('[data-layer-action]').forEach(button => {
             button.dataset.layerId = layer.id;
@@ -133,7 +138,7 @@ class LayerPanel {
 
         this.container.replaceChildren(fragment);
         this.container.classList.toggle('empty', layers.length === 0);
-        if (layers.length === 0) this.container.textContent = '尚無圖層；繪製或匯入圖片後會顯示於此。';
+        if (layers.length === 0) this.container.textContent = lang.get('layer_empty');
     }
 }
 
