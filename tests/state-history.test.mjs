@@ -36,6 +36,44 @@ test('global frame settings calculate duration and clamp the playhead', () => {
     assert.equal(state.timelineTick, 45);
 });
 
+test('changing total frames retimes modifiers and keyframes to change the whole animation speed', () => {
+    const state = new StateManager();
+    state.addGroup({
+        id: 'animated', type: 'image', particles: [],
+        modifiers: [{ id: 'spin', type: 'spin', enabled: true, startTick: 0, duration: 80, from: 0, to: 360 }, { id: 'noise', type: 'noise', enabled: true, frequency: 0.5 }],
+        tracks: [{ id: 'track', property: 'position.x', enabled: true, keyframes: [{ id: 'a', tick: 0, value: 0 }, { id: 'b', tick: 40, value: 1 }, { id: 'c', tick: 80, value: 2 }] }]
+    });
+    state.setTimelineFrameSettings(1, 161);
+    assert.equal(state.timelineDuration, 160);
+    assert.equal(state.drawingGroups[0].modifiers[0].duration, 160);
+    assert.equal(state.drawingGroups[0].modifiers[1].frequency, 0.25);
+    assert.deepEqual(state.drawingGroups[0].tracks[0].keyframes.map(key => key.tick), [0, 80, 160]);
+});
+
+test('changing frame interval preserves poses per frame while extending tick duration', () => {
+    const state = new StateManager();
+    state.addGroup({ id: 'spin-layer', type: 'image', particles: [], modifiers: [{ id: 'spin', type: 'spin', enabled: true, duration: 80, from: 0, to: 360 }] });
+    state.setTimelineFrameSettings(4, 81);
+    assert.equal(state.timelineDuration, 320);
+    assert.equal(state.drawingGroups[0].modifiers[0].duration, 320);
+});
+
+test('loading pre-retiming frame settings expands legacy modifier ranges to the full timeline', () => {
+    const state = new StateManager();
+    state.loadProject({
+        version: '3.0', name: 'legacy-frame-cache', particles: [],
+        settings: { timelineDuration: 216, timelineFrameInterval: 2, timelineFrameCount: 109 },
+        groups: [{ id: 'legacy', type: 'image', particles: [], modifiers: [
+            { id: 'orbit', type: 'orbit', enabled: true, startTick: 0, duration: 80 },
+            { id: 'wave', type: 'wave', enabled: true, startTick: 0, duration: 80 },
+            { id: 'spin', type: 'spin', enabled: true, startTick: 0, duration: 80 }
+        ] }]
+    });
+    assert.equal(state.timelineDuration, 216);
+    assert.deepEqual(state.drawingGroups[0].modifiers.map(modifier => modifier.duration), [216, 216, 216]);
+    assert.equal(state.timelineRetimingVersion, 1);
+});
+
 test('solo is exclusive, reversible and cleared for newly added layers', () => {
     const state = new StateManager();
     state.addGroup({ id: 'a', type: 'image', particles: [{ id: 'pa', x: 0, y: 0, z: 0 }] });

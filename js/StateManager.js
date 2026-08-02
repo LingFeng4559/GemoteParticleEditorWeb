@@ -41,6 +41,7 @@ class StateManager {
         this.timelineTick = 0;
         this.timelineFrameInterval = 1;
         this.timelineFrameCount = 81;
+        this.timelineRetimingVersion = 1;
         this.timelineDuration = 80;
         this.timelinePlaying = false;
 
@@ -141,6 +142,7 @@ class StateManager {
             timelineTick: this.timelineTick,
             timelineFrameInterval: this.timelineFrameInterval,
             timelineFrameCount: this.timelineFrameCount,
+            timelineRetimingVersion: this.timelineRetimingVersion,
             timelineDuration: this.timelineDuration,
             timelinePlaying: this.timelinePlaying,
             usedColors: this.getUsedColors(),
@@ -302,20 +304,66 @@ class StateManager {
     setTimelineDuration(duration) {
         const value = Number(duration);
         const requestedDuration = Math.max(1, Math.round(Number.isFinite(value) ? value : 80));
+        const previousDuration = this.timelineDuration;
         this.timelineFrameCount = Math.max(2, Math.round(requestedDuration / this.timelineFrameInterval) + 1);
         this.timelineDuration = this.timelineFrameInterval * (this.timelineFrameCount - 1);
+        this.retimeTimeline(previousDuration, this.timelineDuration);
         this.timelineTick = Math.min(this.timelineTick, this.timelineDuration);
         this.setUnsavedChanges(true);
         this.notify();
     }
 
     setTimelineFrameSettings(interval, frameCount) {
+        const previousDuration = this.timelineDuration;
         this.timelineFrameInterval = Math.max(1, Math.round(Number(interval) || 1));
         this.timelineFrameCount = Math.max(2, Math.round(Number(frameCount) || 2));
         this.timelineDuration = this.timelineFrameInterval * (this.timelineFrameCount - 1);
+        this.retimeTimeline(previousDuration, this.timelineDuration);
         this.timelineTick = Math.min(this.timelineTick, this.timelineDuration);
         this.setUnsavedChanges(true);
         this.notify();
+    }
+
+    retimeTimeline(previousDuration, nextDuration) {
+        const oldDuration = Math.max(1, Number(previousDuration) || 1);
+        const newDuration = Math.max(1, Number(nextDuration) || 1);
+        if (oldDuration === newDuration) return;
+        const scaleTick = value => (Number(value) || 0) * newDuration / oldDuration;
+        this.drawingGroups = normalizeLayers(this.drawingGroups.map(layer => ({
+            ...layer,
+            timing: layer.timing ? {
+                ...layer.timing,
+                startTick: scaleTick(layer.timing.startTick),
+                duration: Math.max(1, scaleTick(layer.timing.duration ?? oldDuration))
+            } : layer.timing,
+            tracks: (layer.tracks || []).map(track => ({
+                ...track,
+                keyframes: (track.keyframes || []).map(keyframe => ({ ...keyframe, tick: scaleTick(keyframe.tick) }))
+            })),
+            modifiers: (layer.modifiers || []).map(modifier => ({
+                ...modifier,
+                startTick: scaleTick(modifier.startTick),
+                ...(modifier.duration === undefined ? {} : { duration: Math.max(1, scaleTick(modifier.duration)) }),
+                ...(modifier.type === 'noise' && modifier.frequency !== undefined
+                    ? { frequency: Number(modifier.frequency) * oldDuration / newDuration }
+                    : {})
+            }))
+        })));
+        if (this.selectedGroup) this.selectedGroup = this.drawingGroups.find(layer => layer.id === this.selectedGroup.id) || null;
+        this.timelineTick = scaleTick(this.timelineTick);
+    }
+
+    getTimelineContentDuration() {
+        let extent = 0;
+        for (const layer of this.drawingGroups) {
+            for (const modifier of layer.modifiers || []) {
+                if (modifier.duration !== undefined) extent = Math.max(extent, (Number(modifier.startTick) || 0) + (Number(modifier.duration) || 0));
+            }
+            for (const track of layer.tracks || []) {
+                for (const keyframe of track.keyframes || []) extent = Math.max(extent, Number(keyframe.tick) || 0);
+            }
+        }
+        return extent;
     }
 
     setTimelinePlaying(playing) {
@@ -576,6 +624,7 @@ class StateManager {
         this.lastPointPosition = null;
         this.selectedGroup = null;
 
+        const needsLegacyFrameRetime = !!projectData.settings?.timelineFrameCount && Number(projectData.settings.timelineRetimingVersion || 0) < 1;
         if (projectData.settings) {
             this.drawingHeight = projectData.settings.drawingHeight || 0;
             this.planeRotation = projectData.settings.planeRotation || { x: 0, y: 0, z: 0 };
@@ -605,6 +654,7 @@ class StateManager {
             const legacyDuration = Math.max(1, Number(projectData.settings.timelineDuration) || 80);
             this.timelineFrameInterval = Math.max(1, Math.round(Number(projectData.settings.timelineFrameInterval) || 1));
             this.timelineFrameCount = Math.max(2, Math.round(Number(projectData.settings.timelineFrameCount) || (Math.round(legacyDuration / this.timelineFrameInterval) + 1)));
+            this.timelineRetimingVersion = 1;
             this.timelineDuration = this.timelineFrameInterval * (this.timelineFrameCount - 1);
         } else {
             this.animationEnabled = false;
@@ -625,6 +675,7 @@ class StateManager {
             this.characterMode = 'opaque';
             this.timelineFrameInterval = 1;
             this.timelineFrameCount = 81;
+            this.timelineRetimingVersion = 1;
             this.timelineDuration = 80;
         }
         this.timelineTick = 0;
@@ -656,6 +707,11 @@ class StateManager {
                 }
                 return out;
             }));
+        }
+
+        if (needsLegacyFrameRetime) {
+            const contentDuration = this.getTimelineContentDuration();
+            if (contentDuration > 0 && contentDuration !== this.timelineDuration) this.retimeTimeline(contentDuration, this.timelineDuration);
         }
 
         this.setUnsavedChanges(false);

@@ -65,6 +65,7 @@ class ProjectManager {
                 head: state.head,
                 timelineFrameInterval: state.timelineFrameInterval,
                 timelineFrameCount: state.timelineFrameCount,
+                timelineRetimingVersion: state.timelineRetimingVersion,
                 timelineDuration: state.timelineDuration,
                 horizontalMirrorEnabled: !!state.horizontalMirrorEnabled,
                 horizontalMirrorZEnabled: !!state.horizontalMirrorZEnabled,

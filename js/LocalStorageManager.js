@@ -100,6 +100,7 @@ class LocalStorageManager {
                     animationTickInterval: state.animationTickInterval,
                     timelineFrameInterval: state.timelineFrameInterval,
                     timelineFrameCount: state.timelineFrameCount,
+                    timelineRetimingVersion: state.timelineRetimingVersion,
                     timelineDuration: state.timelineDuration,
                     loop: state.loop,
                     head: state.head,
