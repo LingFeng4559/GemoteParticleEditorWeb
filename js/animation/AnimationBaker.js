@@ -5,18 +5,22 @@ export function bakeParticleEvents(state, { maxCommands = 12000 } = {}) {
     const layers = (state.drawingGroups || []).filter(layer =>
         !isLayerContainer(layer) && isLayerEffectivelyExported(layer.id, state.drawingGroups) && layer.particles?.length
     );
-    const duration = Math.max(1, Math.round(Number(state.timelineDuration) || 80));
+    const frameInterval = Math.max(1, Math.round(Number(state.timelineFrameInterval) || 1));
+    const legacyDuration = Math.max(1, Math.round(Number(state.timelineDuration) || 80));
+    const frameCount = Math.max(2, Math.round(Number(state.timelineFrameCount) || (Math.round(legacyDuration / frameInterval) + 1)));
+    const duration = frameInterval * (frameCount - 1);
     const animatedLayers = layers.filter(layer => layer.modifiers?.some(modifier => modifier.enabled !== false) || layer.tracks?.some(track => track.enabled !== false));
     const animatedIds = new Set(animatedLayers.map(layer => layer.id));
     const staticCommands = (state.particlePoints || []).length + layers
         .filter(layer => !animatedIds.has(layer.id))
         .reduce((sum, layer) => sum + layer.particles.length, 0);
-    const animatedIdealCommands = animatedLayers.reduce((sum, layer) => sum + layer.particles.length * (duration + 1), 0);
+    const animatedIdealCommands = animatedLayers.reduce((sum, layer) => sum + layer.particles.length * frameCount, 0);
     const idealCommands = staticCommands + animatedIdealCommands;
     const availableAnimatedBudget = Math.max(1, maxCommands - staticCommands);
     const animatedParticlesPerFrame = animatedLayers.reduce((sum, layer) => sum + layer.particles.length, 0);
     const maxAnimatedFrames = animatedParticlesPerFrame > 0 ? Math.floor(availableAnimatedBudget / animatedParticlesPerFrame) : 0;
-    const bakeStep = maxAnimatedFrames <= 1 ? duration : Math.max(1, Math.ceil(duration / (maxAnimatedFrames - 1)));
+    const frameStride = maxAnimatedFrames <= 1 ? frameCount - 1 : Math.max(1, Math.ceil((frameCount - 1) / (maxAnimatedFrames - 1)));
+    const bakeStep = frameInterval * frameStride;
     const events = (state.particlePoints || []).map(point => ({ tick: 0, point, layerId: null }));
 
     for (const layer of layers) {
@@ -38,7 +42,7 @@ export function bakeParticleEvents(state, { maxCommands = 12000 } = {}) {
     }
     events.sort((a, b) => a.tick - b.tick);
     return {
-        events, bakeStep, idealCommands, limited: idealCommands > maxCommands,
+        events, bakeStep, frameInterval, frameCount, idealCommands, limited: idealCommands > maxCommands,
         estimatedCommands: events.length,
         estimatedBytes: events.length * 155
     };

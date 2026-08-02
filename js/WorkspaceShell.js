@@ -244,9 +244,11 @@ class WorkspaceShell {
             : '<span class="context-icon">◇</span><div><strong>選取一個圖層</strong><p>從圖層面板或 3D 視窗選取內容後，在這裡編輯屬性與動畫。</p></div>';
         document.querySelector('[data-role="status-selection"]').textContent = selected ? `選取：${selected.name}` : '沒有選取項目';
         document.querySelector('[data-role="status-particles"]').textContent = `${particleCount.toLocaleString()} 個粒子`;
-        document.querySelector('[data-role="status-time"]').textContent = `Tick ${Math.round(state.timelineTick || 0)} / ${state.timelineDuration || 80}`;
+        const frameInterval = Math.max(1, Number(state.timelineFrameInterval) || 1);
+        const currentFrame = Math.min(state.timelineFrameCount || 81, Math.round((state.timelineTick || 0) / frameInterval) + 1);
+        document.querySelector('[data-role="status-time"]').textContent = `影格 ${currentFrame} / ${state.timelineFrameCount || 81} · Tick ${Math.round(state.timelineTick || 0)}`;
         document.querySelector('[data-role="preview-particles"]').textContent = `${particleCount.toLocaleString()} 粒子`;
-        document.querySelector('[data-role="preview-tick"]').textContent = `Tick ${Math.round(state.timelineTick || 0)} / ${state.timelineDuration || 80}`;
+        document.querySelector('[data-role="preview-tick"]').textContent = `影格 ${currentFrame} / ${state.timelineFrameCount || 81} · Tick ${Math.round(state.timelineTick || 0)}`;
         document.querySelector('[data-role="mode"]').textContent = `${this.modeLabel(state.currentMode)}模式`;
         const preview = document.querySelector('[data-command="preview"]');
         preview.classList.toggle('active', !!state.timelinePlaying);

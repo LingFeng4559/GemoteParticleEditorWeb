@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { buildEditorAnnotationLines, buildParticleAnnotation, calculateEditorChecksum, parseAnnotatedYml } from '../js/yaml/EditorAnnotations.js';
 
 test('annotation round-trip restores hierarchy, transforms and particles', () => {
-    const state = { timelineDuration: 120, drawingGroups: [
+    const state = { timelineDuration: 120, timelineFrameInterval: 4, timelineFrameCount: 31, drawingGroups: [
         { id: 'folder', type: 'layer-group', layerKind: 'group', name: '雙環', parentId: null, transform: { position: { x: 1, y: 0, z: 0 } } },
         { id: 'a', type: 'image', layerKind: 'content', name: 'A 左旋', parentId: 'folder', modifiers: [{ type: 'spin', axis: 'Y', to: -360 }] }
     ] };
@@ -14,6 +14,8 @@ test('annotation round-trip restores hierarchy, transforms and particles', () =>
     ].join('\n');
     const project = parseAnnotatedYml(text);
     assert.equal(project.settings.timelineDuration, 120);
+    assert.equal(project.settings.timelineFrameInterval, 4);
+    assert.equal(project.settings.timelineFrameCount, 31);
     assert.equal(project.settings.loop, 2);
     assert.equal(project.settings.head, true);
     assert.equal(project.groups[1].parentId, 'folder');

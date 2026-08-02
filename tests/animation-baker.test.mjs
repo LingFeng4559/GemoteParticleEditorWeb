@@ -21,3 +21,12 @@ test('unlimited export bakes every timeline tick without downsampling', () => {
     assert.equal(baked.limited, false);
     assert.deepEqual(baked.events.map(event => event.tick), [0, 1, 2, 3, 4]);
 });
+
+test('global frame interval and frame count determine every exported image tick', () => {
+    const layer = { id: 'timed', particles: [{ x: 1, y: 0, z: 0, particleType: 'flame' }], visible: true, exportEnabled: true, modifiers: [{ type: 'spin', enabled: true, axis: 'Y', from: 0, to: 360, duration: 20 }] };
+    const baked = bakeParticleEvents({ particlePoints: [], drawingGroups: [layer], timelineDuration: 20, timelineFrameInterval: 5, timelineFrameCount: 5 }, { maxCommands: Infinity });
+    assert.equal(baked.frameInterval, 5);
+    assert.equal(baked.frameCount, 5);
+    assert.equal(baked.bakeStep, 5);
+    assert.deepEqual(baked.events.map(event => event.tick), [0, 5, 10, 15, 20]);
+});

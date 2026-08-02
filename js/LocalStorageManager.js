@@ -98,6 +98,8 @@ class LocalStorageManager {
                     gridSize: state.gridSize,
                     animationEnabled: state.animationEnabled,
                     animationTickInterval: state.animationTickInterval,
+                    timelineFrameInterval: state.timelineFrameInterval,
+                    timelineFrameCount: state.timelineFrameCount,
                     timelineDuration: state.timelineDuration,
                     loop: state.loop,
                     head: state.head,

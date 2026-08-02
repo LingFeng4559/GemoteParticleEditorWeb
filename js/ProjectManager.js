@@ -63,6 +63,8 @@ class ProjectManager {
                 animationTickInterval: state.animationTickInterval,
                 loop: state.loop,
                 head: state.head,
+                timelineFrameInterval: state.timelineFrameInterval,
+                timelineFrameCount: state.timelineFrameCount,
                 timelineDuration: state.timelineDuration,
                 horizontalMirrorEnabled: !!state.horizontalMirrorEnabled,
                 horizontalMirrorZEnabled: !!state.horizontalMirrorZEnabled,

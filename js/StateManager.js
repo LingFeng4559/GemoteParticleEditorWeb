@@ -39,6 +39,8 @@ class StateManager {
         this.loop = 0; // Gemote 循環次數
         this.head = false; // Gemote 是否從頭部高度播放
         this.timelineTick = 0;
+        this.timelineFrameInterval = 1;
+        this.timelineFrameCount = 81;
         this.timelineDuration = 80;
         this.timelinePlaying = false;
 
@@ -137,6 +139,8 @@ class StateManager {
             loop: this.loop,
             head: this.head,
             timelineTick: this.timelineTick,
+            timelineFrameInterval: this.timelineFrameInterval,
+            timelineFrameCount: this.timelineFrameCount,
             timelineDuration: this.timelineDuration,
             timelinePlaying: this.timelinePlaying,
             usedColors: this.getUsedColors(),
@@ -297,7 +301,18 @@ class StateManager {
 
     setTimelineDuration(duration) {
         const value = Number(duration);
-        this.timelineDuration = Math.max(1, Math.round(Number.isFinite(value) ? value : 80));
+        const requestedDuration = Math.max(1, Math.round(Number.isFinite(value) ? value : 80));
+        this.timelineFrameCount = Math.max(2, Math.round(requestedDuration / this.timelineFrameInterval) + 1);
+        this.timelineDuration = this.timelineFrameInterval * (this.timelineFrameCount - 1);
+        this.timelineTick = Math.min(this.timelineTick, this.timelineDuration);
+        this.setUnsavedChanges(true);
+        this.notify();
+    }
+
+    setTimelineFrameSettings(interval, frameCount) {
+        this.timelineFrameInterval = Math.max(1, Math.round(Number(interval) || 1));
+        this.timelineFrameCount = Math.max(2, Math.round(Number(frameCount) || 2));
+        this.timelineDuration = this.timelineFrameInterval * (this.timelineFrameCount - 1);
         this.timelineTick = Math.min(this.timelineTick, this.timelineDuration);
         this.setUnsavedChanges(true);
         this.notify();
@@ -587,7 +602,10 @@ class StateManager {
             this.radialSymmetryOffset = projectData.settings.radialSymmetryOffset || 0;
             this.particleDensity = normalizeParticleDensity(projectData.settings.particleDensity);
             this.characterMode = projectData.settings.characterMode || 'opaque';
-            this.timelineDuration = Math.max(1, Number(projectData.settings.timelineDuration) || 80);
+            const legacyDuration = Math.max(1, Number(projectData.settings.timelineDuration) || 80);
+            this.timelineFrameInterval = Math.max(1, Math.round(Number(projectData.settings.timelineFrameInterval) || 1));
+            this.timelineFrameCount = Math.max(2, Math.round(Number(projectData.settings.timelineFrameCount) || (Math.round(legacyDuration / this.timelineFrameInterval) + 1)));
+            this.timelineDuration = this.timelineFrameInterval * (this.timelineFrameCount - 1);
         } else {
             this.animationEnabled = false;
             this.animationTickInterval = 1;
@@ -605,6 +623,8 @@ class StateManager {
             this.radialSymmetryOffset = 0;
             this.particleDensity = 1.0;
             this.characterMode = 'opaque';
+            this.timelineFrameInterval = 1;
+            this.timelineFrameCount = 81;
             this.timelineDuration = 80;
         }
         this.timelineTick = 0;

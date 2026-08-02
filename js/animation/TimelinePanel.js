@@ -23,7 +23,9 @@ class TimelinePanel {
                 <button type="button" data-action="play">▶</button><button type="button" data-action="stop">■</button>
                 <input data-role="scrubber" type="range" min="0" max="80" value="0" step="1">
                 <input data-role="tick" type="number" min="0" value="0"><span>tick</span>
-                <label>總長 <input data-role="duration" type="number" min="1" value="80"></label>
+                <label>影像間隔 <input data-role="frame-interval" type="number" min="1" value="1"></label><span>tick</span>
+                <label>總影像格數 <input data-role="frame-count" type="number" min="2" value="81"></label>
+                <span class="timeline-total">總長 <strong data-role="duration">80</strong> tick</span>
             </div>
             <div class="timeline-tracks" data-role="tracks" aria-label="關鍵影格軌道"></div>
             <div class="timeline-editor" data-role="editor">
@@ -98,7 +100,12 @@ class TimelinePanel {
         this.root.querySelector('[data-action="stop"]').addEventListener('click', () => { this.stateManager.setTimelinePlaying(false); this.stateManager.setTimelineTick(0); });
         this.root.querySelector('[data-role="scrubber"]').addEventListener('input', event => this.stateManager.setTimelineTick(event.target.value));
         this.root.querySelector('[data-role="tick"]').addEventListener('input', event => this.stateManager.setTimelineTick(event.target.value));
-        this.root.querySelector('[data-role="duration"]').addEventListener('change', event => this.stateManager.setTimelineDuration(event.target.value));
+        const commitFrameSettings = () => this.stateManager.setTimelineFrameSettings(
+            this.root.querySelector('[data-role="frame-interval"]').value,
+            this.root.querySelector('[data-role="frame-count"]').value
+        );
+        this.root.querySelector('[data-role="frame-interval"]').addEventListener('change', commitFrameSettings);
+        this.root.querySelector('[data-role="frame-count"]').addEventListener('change', commitFrameSettings);
         this.controlsRoot.querySelectorAll('[data-transform]').forEach(input => {
             input.addEventListener('input', () => this.scheduleCommit('transform'));
             input.addEventListener('change', () => { this.cancelScheduledCommit('transform'); this.commitTransform(); });
@@ -252,10 +259,14 @@ class TimelinePanel {
         this.root.querySelector('[data-role="selection"]').textContent = layer ? `編輯：${layer.name}` : '請選取圖層';
         this.controlsRoot.style.opacity = layer ? '1' : '.45';
         this.root.querySelector('[data-role="scrubber"]').max = state.timelineDuration;
+        this.root.querySelector('[data-role="scrubber"]').step = state.timelineFrameInterval;
         this.root.querySelector('[data-role="scrubber"]').value = state.timelineTick;
         this.root.querySelector('[data-role="tick"]').max = state.timelineDuration;
+        this.root.querySelector('[data-role="tick"]').step = state.timelineFrameInterval;
         this.root.querySelector('[data-role="tick"]').value = Math.round(state.timelineTick * 10) / 10;
-        this.root.querySelector('[data-role="duration"]').value = state.timelineDuration;
+        this.root.querySelector('[data-role="frame-interval"]').value = state.timelineFrameInterval;
+        this.root.querySelector('[data-role="frame-count"]').value = state.timelineFrameCount;
+        this.root.querySelector('[data-role="duration"]').textContent = state.timelineDuration;
         this.root.querySelector('[data-action="play"]').textContent = state.timelinePlaying ? '❚❚' : '▶';
         this.renderTracks(layer, state);
         if (!layer) return;
@@ -336,11 +347,14 @@ class TimelinePanel {
     animate(time) {
         if (this.stateManager.timelinePlaying) {
             if (!this.lastFrame) this.lastFrame = time;
-            const deltaTicks = (time - this.lastFrame) / 50;
-            if (deltaTicks >= 0.2) {
-                const next = this.stateManager.timelineTick + deltaTicks;
-                this.stateManager.setTimelineTick(next >= this.stateManager.timelineDuration ? 0 : next);
-                this.lastFrame = time;
+            const frameInterval = Math.max(1, Number(this.stateManager.timelineFrameInterval) || 1);
+            const frameDurationMs = frameInterval * 50;
+            const elapsed = time - this.lastFrame;
+            if (elapsed >= frameDurationMs) {
+                const elapsedFrames = Math.floor(elapsed / frameDurationMs);
+                const next = this.stateManager.timelineTick + elapsedFrames * frameInterval;
+                this.stateManager.setTimelineTick(next > this.stateManager.timelineDuration ? 0 : next);
+                this.lastFrame += elapsedFrames * frameDurationMs;
             }
         } else this.lastFrame = time;
         requestAnimationFrame(next => this.animate(next));

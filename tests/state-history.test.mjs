@@ -26,6 +26,16 @@ test('new edits clear redo history and history is bounded', () => {
     assert.equal(state.redo(), false);
 });
 
+test('global frame settings calculate duration and clamp the playhead', () => {
+    const state = new StateManager();
+    state.setTimelineTick(80);
+    state.setTimelineFrameSettings(5, 10);
+    assert.equal(state.timelineFrameInterval, 5);
+    assert.equal(state.timelineFrameCount, 10);
+    assert.equal(state.timelineDuration, 45);
+    assert.equal(state.timelineTick, 45);
+});
+
 test('solo is exclusive, reversible and cleared for newly added layers', () => {
     const state = new StateManager();
     state.addGroup({ id: 'a', type: 'image', particles: [{ id: 'pa', x: 0, y: 0, z: 0 }] });

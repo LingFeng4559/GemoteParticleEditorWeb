@@ -40,7 +40,7 @@ export function calculateEditorChecksum(layers) {
 
 export function buildEditorAnnotationLines(state) {
     return [
-        `${EDITOR_TAG} ${JSON.stringify({ version: 3, timelineDuration: state.timelineDuration || 80, checksum: calculateEditorChecksum(state.drawingGroups) })}`,
+        `${EDITOR_TAG} ${JSON.stringify({ version: 3, timelineDuration: state.timelineDuration || 80, timelineFrameInterval: state.timelineFrameInterval || 1, timelineFrameCount: state.timelineFrameCount || 81, checksum: calculateEditorChecksum(state.drawingGroups) })}`,
         ...state.drawingGroups.map(layer => `${LAYER_TAG} ${JSON.stringify(layerMetadata(layer))}`)
     ];
 }
@@ -107,7 +107,7 @@ export function parseAnnotatedYml(text) {
         name: 'YML 反解析專案',
         particles: [],
         groups: normalizeLayers(layers),
-        settings: { loop, head, timelineDuration: editor?.timelineDuration || 80 },
+        settings: { loop, head, timelineDuration: editor?.timelineDuration || 80, timelineFrameInterval: editor?.timelineFrameInterval || 1, timelineFrameCount: editor?.timelineFrameCount || Math.round((editor?.timelineDuration || 80) / (editor?.timelineFrameInterval || 1)) + 1 },
         importWarnings: checksumValid ? [] : ['編輯器註解 checksum 不一致；YML 可能曾被外部修改。']
     };
 }
