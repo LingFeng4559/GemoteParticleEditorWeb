@@ -101,11 +101,11 @@ class TimelinePanel {
         this.root.querySelector('[data-role="duration"]').addEventListener('change', event => this.stateManager.setTimelineDuration(event.target.value));
         this.controlsRoot.querySelectorAll('[data-transform]').forEach(input => {
             input.addEventListener('input', () => this.scheduleCommit('transform'));
-            input.addEventListener('change', () => this.commitTransform());
+            input.addEventListener('change', () => { this.cancelScheduledCommit('transform'); this.commitTransform(); });
         });
         this.controlsRoot.querySelectorAll('[data-spin]').forEach(input => {
             input.addEventListener('input', () => this.scheduleCommit('spin'));
-            input.addEventListener('change', () => this.commitSpin());
+            input.addEventListener('change', () => { this.cancelScheduledCommit('spin'); this.commitSpin(); });
         });
         this.controlsRoot.querySelector('[data-spin-action="remove"]').addEventListener('click', () => this.removeSpin());
         this.controlsRoot.querySelectorAll('[data-transform-action]').forEach(button => button.addEventListener('click', () => this.handleTransformAction(button.dataset.transformAction)));
@@ -113,17 +113,24 @@ class TimelinePanel {
         this.controlsRoot.querySelectorAll('[data-timing]').forEach(input => input.addEventListener('change', () => this.commitTiming()));
         this.controlsRoot.querySelectorAll('[data-orbit]').forEach(input => {
             input.addEventListener('input', () => this.scheduleCommit('orbit'));
-            input.addEventListener('change', () => this.commitOrbit());
+            input.addEventListener('change', () => { this.cancelScheduledCommit('orbit'); this.commitOrbit(); });
         });
         this.controlsRoot.querySelectorAll('[data-preset]').forEach(button => button.addEventListener('click', () => this.addPreset(button.dataset.preset)));
     }
 
     scheduleCommit(kind) {
-        clearTimeout(this.commitTimers.get(kind));
+        this.cancelScheduledCommit(kind);
+        const layerId = this.selectedLayer()?.id;
         this.commitTimers.set(kind, setTimeout(() => {
             this.commitTimers.delete(kind);
+            if (!layerId || this.selectedLayer()?.id !== layerId) return;
             if (kind === 'spin') this.commitSpin(); else if (kind === 'orbit') this.commitOrbit(); else this.commitTransform();
         }, 120));
+    }
+
+    cancelScheduledCommit(kind) {
+        clearTimeout(this.commitTimers.get(kind));
+        this.commitTimers.delete(kind);
     }
 
     selectedLayer() {
@@ -226,8 +233,7 @@ class TimelinePanel {
     removeSpin() {
         const layer = this.selectedLayer();
         if (!layer) return;
-        clearTimeout(this.commitTimers.get('spin'));
-        this.commitTimers.delete('spin');
+        this.cancelScheduledCommit('spin');
         this.stateManager.updateLayerAnimation(layer.id, { modifiers: removeModifierByType(layer.modifiers, 'spin') });
     }
 
