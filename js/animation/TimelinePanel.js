@@ -1,5 +1,5 @@
 import { normalizeTransform } from './AnimationModel.js';
-import { applySpinDirection, buildOrbitModifier, buildSpinModifier, buildTransformFromValues, calculateParticleCenter, removeKeyframesAtTick, removeModifierByType, removeTimelineItem, replaceModifierByType, spinDirection, upsertTransformKeyframes } from './TimelineControlModel.js';
+import { advanceTimelineTick, applySpinDirection, buildOrbitModifier, buildSpinModifier, buildTransformFromValues, calculateParticleCenter, removeKeyframesAtTick, removeModifierByType, removeTimelineItem, replaceModifierByType, spinDirection, upsertTransformKeyframes } from './TimelineControlModel.js';
 
 class TimelinePanel {
     constructor(stateManager) {
@@ -352,8 +352,8 @@ class TimelinePanel {
             const elapsed = time - this.lastFrame;
             if (elapsed >= frameDurationMs) {
                 const elapsedFrames = Math.floor(elapsed / frameDurationMs);
-                const next = this.stateManager.timelineTick + elapsedFrames * frameInterval;
-                this.stateManager.setTimelineTick(next > this.stateManager.timelineDuration ? 0 : next);
+                const next = advanceTimelineTick(this.stateManager.timelineTick, elapsedFrames, frameInterval, this.stateManager.timelineDuration);
+                this.stateManager.setTimelineTick(next);
                 this.lastFrame += elapsedFrames * frameDurationMs;
             }
         } else this.lastFrame = time;

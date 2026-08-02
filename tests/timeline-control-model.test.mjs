@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { applySpinDirection, buildOrbitModifier, buildSpinModifier, buildTransformFromValues, calculateParticleCenter, removeKeyframesAtTick, removeModifierByType, removeTimelineItem, replaceModifierByType, spinDirection, upsertTransformKeyframes } from '../js/animation/TimelineControlModel.js';
+import { advanceTimelineTick, applySpinDirection, buildOrbitModifier, buildSpinModifier, buildTransformFromValues, calculateParticleCenter, removeKeyframesAtTick, removeModifierByType, removeTimelineItem, replaceModifierByType, spinDirection, upsertTransformKeyframes } from '../js/animation/TimelineControlModel.js';
 
 test('timeline controls preserve negative and multi-turn spin angles', () => {
     const negative = buildSpinModifier(null, { enabled: true, axis: 'y', from: '0', to: '-360', duration: '80' }, () => 'spin-a');
@@ -30,6 +30,12 @@ test('spin direction is explicit and preserves the configured turn count', () =>
     assert.equal(spinDirection(30, 750), 'right');
     assert.equal(applySpinDirection(30, 750, 'left'), -690);
     assert.equal(applySpinDirection(30, -690, 'right'), 750);
+});
+
+test('timeline playback loops immediately after the last exclusive frame', () => {
+    assert.equal(advanceTimelineTick(359, 1, 1, 360), 0);
+    assert.equal(advanceTimelineTick(356, 1, 4, 360), 0);
+    assert.equal(advanceTimelineTick(356, 2, 4, 360), 4);
 });
 
 test('removing spin leaves every other modifier intact', () => {

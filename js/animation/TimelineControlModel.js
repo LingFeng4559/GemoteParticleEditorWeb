@@ -49,6 +49,13 @@ export function applySpinDirection(from, to, direction) {
     return start + (direction === 'left' ? -distance : distance);
 }
 
+export function advanceTimelineTick(currentTick, elapsedFrames, frameInterval, duration) {
+    const interval = Math.max(1, finite(frameInterval, 1));
+    const totalDuration = Math.max(interval, finite(duration, interval));
+    const next = Math.max(0, finite(currentTick)) + Math.max(0, Math.floor(finite(elapsedFrames))) * interval;
+    return next >= totalDuration ? next % totalDuration : next;
+}
+
 export function buildOrbitModifier(current, values = {}, idFactory = () => crypto.randomUUID()) {
     return normalizeModifier({
         id: current?.id || idFactory(), type: 'orbit', name: current?.name || '公轉',
