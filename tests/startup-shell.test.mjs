@@ -26,3 +26,12 @@ test('quick start asks for language before choosing a project action', async () 
     assert.ok(actionsPosition > languagePosition, 'language must appear before project actions');
     assert.match(workspace, /quick-start-language[^]*lang\.setLanguage/);
 });
+
+test('topbar project name supports inline editing and uses the canonical state field', async () => {
+    const workspace = await readFile(new URL('../js/WorkspaceShell.js', import.meta.url), 'utf8');
+    assert.match(workspace, /data-role="project-name-editor"/);
+    assert.match(workspace, /startProjectNameEdit\(\)/);
+    assert.match(workspace, /finishProjectNameEdit\(save\)/);
+    assert.match(workspace, /stateManager\.setProjectName\(name\)/);
+    assert.match(workspace, /state\.currentProjectName \|\| lang\.get\('unnamed_project'\)/);
+});

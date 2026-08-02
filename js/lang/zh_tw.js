@@ -11,7 +11,7 @@ export default {
     workspace_mode_eraser: "橡皮擦", workspace_mode_rectangle: "方形", workspace_mode_circle: "圓形",
     workspace_scene_hierarchy: "場景結構", workspace_layer_groups: "圖層與群組", workspace_image_to_particles: "圖片轉粒子",
     workspace_quick_start_title: "開始建立粒子效果", workspace_quick_start_description: "先選擇介面語言，再建立空白創作或載入既有的 YML。",
-    workspace_language: "介面語言", workspace_choose_start: "選擇開始方式", workspace_close_start: "關閉並開始創作",
+    workspace_language: "介面語言", workspace_choose_start: "選擇開始方式", workspace_close_start: "關閉並開始創作", workspace_rename_project: "重新命名專案",
     workspace_new_creation: "＋ 新的創作", workspace_load_yml: "載入 YML", workspace_drop_yml: "也可以把 YML 拖曳到這裡",
     workspace_yml_types: "支援 .yml 與 .yaml", workspace_loop_preview: "循環預覽", workspace_autosaved: "● 已自動儲存",
     workspace_export_validate: "驗證", workspace_export_optimize: "最佳化", workspace_export_output: "輸出",

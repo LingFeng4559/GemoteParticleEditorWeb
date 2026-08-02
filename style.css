@@ -1176,6 +1176,33 @@ input[type="range"]:hover::-webkit-slider-thumb { background-color: var(--primar
 .workspace-switcher { display: flex; padding: 3px; background: #0b1220; border: 1px solid #273449; border-radius: 8px; }
 #workspace-topbar button { width: auto; min-width: 0; padding: 6px 11px; color: #94a3b8; background: transparent; border: 0; border-radius: 6px; font: 500 11px var(--font-family); }
 #workspace-topbar button:hover { color: #e2e8f0; background: #1e293b; }
+#workspace-topbar .project-name-button {
+    display: block;
+    max-width: 180px;
+    padding: 1px 4px;
+    overflow: hidden;
+    color: #7f8fa3;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font-size: 10px;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+#workspace-topbar .project-name-button:hover { color: #bae6fd; border-color: #334155; background: #172033; }
+.project-name-editor {
+    width: 180px;
+    min-width: 0;
+    height: 22px;
+    padding: 1px 5px;
+    color: #e2e8f0;
+    background: #0f172a;
+    border: 1px solid #38bdf8;
+    border-radius: 4px;
+    font: 500 10px var(--font-family);
+    outline: 2px solid rgba(56, 189, 248, .18);
+}
+.project-name-editor[hidden] { display: none; }
 #workspace-topbar button.active, #workspace-topbar .workspace-switcher button.active { color: #e0f2fe; background: #075985; }
 .global-actions { display: flex; justify-content: flex-end; align-items: center; gap: 5px; }
 #workspace-topbar #language-select { max-width: 108px; min-height: 28px; color: #dbe7f4; background: #1e293b; border-color: #475569; }

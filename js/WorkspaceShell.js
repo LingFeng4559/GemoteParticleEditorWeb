@@ -17,7 +17,7 @@ class WorkspaceShell {
         document.body.dataset.workspace = this.workspace;
         document.body.insertAdjacentHTML('beforeend', `
             <header id="workspace-topbar" aria-label="專案工具列">
-                <div class="app-identity"><span class="app-mark">G</span><div><strong>Gemote Particle Editor</strong><small data-role="project-name">未命名專案</small></div></div>
+                <div class="app-identity"><span class="app-mark">G</span><div><strong>Gemote Particle Editor</strong><button type="button" class="project-name-button" data-role="project-name" aria-label="重新命名專案">未命名專案</button><input class="project-name-editor" data-role="project-name-editor" type="text" maxlength="80" hidden></div></div>
                 <nav class="workspace-switcher" aria-label="工作區">
                     <button data-workspace="draw" class="active">繪製</button>
                     <button data-workspace="animate">動畫</button>
@@ -134,6 +134,14 @@ class WorkspaceShell {
         document.querySelector('#quick-start-language')?.addEventListener('change', event => lang.setLanguage(event.target.value));
         document.querySelectorAll('.workspace-switcher [data-workspace]').forEach(button => button.addEventListener('click', () => this.setWorkspace(button.dataset.workspace)));
         document.querySelectorAll('[data-left-tab]').forEach(button => button.addEventListener('click', () => this.setLeftTab(button.dataset.leftTab)));
+        const projectNameButton = document.querySelector('[data-role="project-name"]');
+        const projectNameEditor = document.querySelector('[data-role="project-name-editor"]');
+        projectNameButton?.addEventListener('click', () => this.startProjectNameEdit());
+        projectNameEditor?.addEventListener('keydown', event => {
+            if (event.key === 'Enter') { event.preventDefault(); this.finishProjectNameEdit(true); }
+            if (event.key === 'Escape') { event.preventDefault(); this.finishProjectNameEdit(false); }
+        });
+        projectNameEditor?.addEventListener('blur', () => this.finishProjectNameEdit(true));
         document.querySelector('#workspace-topbar').addEventListener('click', event => {
             const command = event.target.closest('[data-command]')?.dataset.command;
             if (!command) return;
@@ -233,6 +241,30 @@ class WorkspaceShell {
         }
     }
 
+    startProjectNameEdit() {
+        const button = document.querySelector('[data-role="project-name"]');
+        const editor = document.querySelector('[data-role="project-name-editor"]');
+        if (!button || !editor || !editor.hidden) return;
+        editor.value = this.stateManager.getState().currentProjectName || '';
+        button.hidden = true;
+        editor.hidden = false;
+        editor.focus();
+        editor.select();
+    }
+
+    finishProjectNameEdit(save) {
+        const button = document.querySelector('[data-role="project-name"]');
+        const editor = document.querySelector('[data-role="project-name-editor"]');
+        if (!button || !editor || editor.hidden) return;
+        if (save) {
+            const name = editor.value.trim() || lang.get('unnamed_project');
+            this.stateManager.setProjectName(name);
+        }
+        editor.hidden = true;
+        button.hidden = false;
+        this.update(this.stateManager.getState());
+    }
+
     setTimelineCollapsed(collapsed) {
         const panel = document.querySelector('.timeline-panel');
         if (!panel) return;
@@ -253,7 +285,10 @@ class WorkspaceShell {
         const selected = (state.drawingGroups || []).find(layer => layer.id === state.selectedGroup?.id);
         document.body.classList.toggle('has-layer-selection', !!selected);
         const particleCount = (state.particlePoints || []).length + (state.drawingGroups || []).reduce((sum, layer) => sum + (layer.particles?.length || 0), 0);
-        document.querySelector('[data-role="project-name"]').textContent = state.projectName || lang.get('unnamed_project');
+        const projectNameButton = document.querySelector('[data-role="project-name"]');
+        projectNameButton.textContent = state.currentProjectName || lang.get('unnamed_project');
+        projectNameButton.title = lang.get('workspace_rename_project');
+        projectNameButton.setAttribute('aria-label', lang.get('workspace_rename_project'));
         const inspectorTitle = this.workspace === 'draw' ? lang.get('workspace_tool_settings')
             : this.workspace === 'export' ? lang.get('workspace_export_settings')
                 : selected?.name || lang.get('workspace_no_layer');

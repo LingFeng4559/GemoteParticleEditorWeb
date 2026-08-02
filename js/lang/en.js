@@ -11,7 +11,7 @@ export default {
     workspace_mode_eraser: "Eraser", workspace_mode_rectangle: "Rectangle", workspace_mode_circle: "Circle",
     workspace_scene_hierarchy: "Scene hierarchy", workspace_layer_groups: "Layers and groups", workspace_image_to_particles: "Image to particles",
     workspace_quick_start_title: "Start creating a particle effect", workspace_quick_start_description: "Choose your language, then create a blank project or load an existing YML file.",
-    workspace_language: "Interface language", workspace_choose_start: "How would you like to start?", workspace_close_start: "Close and start creating",
+    workspace_language: "Interface language", workspace_choose_start: "How would you like to start?", workspace_close_start: "Close and start creating", workspace_rename_project: "Rename project",
     workspace_new_creation: "+ New creation", workspace_load_yml: "Load YML", workspace_drop_yml: "You can also drop a YML file here",
     workspace_yml_types: "Supports .yml and .yaml", workspace_loop_preview: "Loop preview", workspace_autosaved: "● Autosaved",
     workspace_export_validate: "Validate", workspace_export_optimize: "Optimize", workspace_export_output: "Output",
