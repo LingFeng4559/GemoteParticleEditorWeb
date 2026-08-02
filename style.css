@@ -240,8 +240,13 @@ body.app-loading::after {
     white-space: nowrap;
 }
 
-.timeline-row { display: flex; align-items: center; gap: 8px; padding: 10px 0 4px; }
-.timeline-row [data-role="scrubber"] { flex: 1; min-width: 90px; accent-color: var(--accent); }
+.timeline-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 0 4px; }
+.timeline-row > button { width: 40px; flex: 0 0 40px; padding-inline: 6px; }
+.timeline-row [data-role="scrubber"] { flex: 1 1 180px; min-width: 120px; accent-color: var(--accent); }
+.timeline-row > input[type="number"] { width: 68px; min-width: 68px; flex: 0 0 68px; }
+.timeline-row > label { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 5px; white-space: nowrap; }
+.timeline-row > label input[type="number"] { width: 88px; min-width: 88px; flex: 0 0 88px; }
+.timeline-row .timeline-total { flex: 0 0 auto; white-space: nowrap; }
 .timeline-panel input[type="number"] {
     width: 68px;
     min-width: 0;
