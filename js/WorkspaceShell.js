@@ -1,3 +1,5 @@
+import lang from './LanguageManager.js';
+
 class WorkspaceShell {
     constructor(stateManager, sceneManager) {
         this.stateManager = stateManager;
@@ -80,6 +82,12 @@ class WorkspaceShell {
                 <span data-role="status-time">Tick 0 / 80</span>
                 <span data-role="status-save">● 已自動儲存</span>
             </footer>`);
+        const languageSelect = document.createElement('select');
+        languageSelect.id = 'language-select';
+        languageSelect.setAttribute('aria-label', 'Language');
+        languageSelect.innerHTML = '<option value="zh_tw">繁體中文</option><option value="zh_cn">简体中文</option><option value="en">English</option>';
+        document.querySelector('#workspace-topbar .global-actions')?.prepend(languageSelect);
+        this.applyLanguage();
     }
 
     rehomeLegacySections() {
@@ -109,6 +117,10 @@ class WorkspaceShell {
     }
 
     bind() {
+        window.addEventListener('languageChanged', () => {
+            this.applyLanguage();
+            this.update(this.stateManager.getState());
+        });
         document.querySelectorAll('.workspace-switcher [data-workspace]').forEach(button => button.addEventListener('click', () => this.setWorkspace(button.dataset.workspace)));
         document.querySelectorAll('[data-left-tab]').forEach(button => button.addEventListener('click', () => this.setLeftTab(button.dataset.leftTab)));
         document.querySelector('#workspace-topbar').addEventListener('click', event => {
@@ -231,9 +243,9 @@ class WorkspaceShell {
         document.body.classList.toggle('has-layer-selection', !!selected);
         const particleCount = (state.particlePoints || []).length + (state.drawingGroups || []).reduce((sum, layer) => sum + (layer.particles?.length || 0), 0);
         document.querySelector('[data-role="project-name"]').textContent = state.projectName || '未命名專案';
-        const inspectorTitle = this.workspace === 'draw' ? '工具設定'
-            : this.workspace === 'export' ? '匯出設定'
-                : selected?.name || '未選取圖層';
+        const inspectorTitle = this.workspace === 'draw' ? lang.get('workspace_tool_settings')
+            : this.workspace === 'export' ? lang.get('workspace_export_settings')
+                : selected?.name || lang.get('workspace_no_layer');
         document.querySelector('[data-role="selection-name"]').textContent = inspectorTitle;
         const context = document.querySelector('[data-role="selection-context"]');
         context.classList.toggle('has-selection', !!selected);
@@ -242,17 +254,18 @@ class WorkspaceShell {
             : selected
             ? `<span class="context-icon">${selected.type === 'group' ? '▣' : '◆'}</span><div><strong>${selected.type === 'group' ? '群組' : '粒子圖層'}</strong><p>${selected.particles?.length || 0} 個粒子 · ${selected.locked ? '已鎖定' : '可編輯'}</p></div>`
             : '<span class="context-icon">◇</span><div><strong>選取一個圖層</strong><p>從圖層面板或 3D 視窗選取內容後，在這裡編輯屬性與動畫。</p></div>';
-        document.querySelector('[data-role="status-selection"]').textContent = selected ? `選取：${selected.name}` : '沒有選取項目';
-        document.querySelector('[data-role="status-particles"]').textContent = `${particleCount.toLocaleString()} 個粒子`;
+        document.querySelector('[data-role="status-selection"]').textContent = selected ? lang.get('workspace_selected', { name: selected.name }) : lang.get('workspace_no_selection');
+        document.querySelector('[data-role="status-particles"]').textContent = lang.get('workspace_particle_count', { count: particleCount.toLocaleString() });
         const frameInterval = Math.max(1, Number(state.timelineFrameInterval) || 1);
         const currentFrame = Math.min(state.timelineFrameCount || 80, Math.round((state.timelineTick || 0) / frameInterval) + 1);
-        document.querySelector('[data-role="status-time"]').textContent = `影格 ${currentFrame} / ${state.timelineFrameCount || 80} · Tick ${Math.round(state.timelineTick || 0)}`;
-        document.querySelector('[data-role="preview-particles"]').textContent = `${particleCount.toLocaleString()} 粒子`;
-        document.querySelector('[data-role="preview-tick"]').textContent = `影格 ${currentFrame} / ${state.timelineFrameCount || 80} · Tick ${Math.round(state.timelineTick || 0)}`;
-        document.querySelector('[data-role="mode"]').textContent = `${this.modeLabel(state.currentMode)}模式`;
+        const timeText = lang.get('workspace_frame_status', { current: currentFrame, total: state.timelineFrameCount || 80, tick: Math.round(state.timelineTick || 0) });
+        document.querySelector('[data-role="status-time"]').textContent = timeText;
+        document.querySelector('[data-role="preview-particles"]').textContent = lang.get('workspace_particle_count', { count: particleCount.toLocaleString() });
+        document.querySelector('[data-role="preview-tick"]').textContent = timeText;
+        document.querySelector('[data-role="mode"]').textContent = lang.get('workspace_mode_status', { mode: this.modeLabel(state.currentMode) });
         const preview = document.querySelector('[data-command="preview"]');
         preview.classList.toggle('active', !!state.timelinePlaying);
-        preview.textContent = state.timelinePlaying ? '❚❚ 暫停' : '▶ 播放';
+        preview.textContent = state.timelinePlaying ? `❚❚ ${lang.get('workspace_pause')}` : `▶ ${lang.get('workspace_play')}`;
         const characterButton = document.querySelector('#viewport-toolbar [data-command="character"]');
         const characterVisible = state.characterMode !== 'hidden';
         characterButton?.classList.toggle('active', characterVisible);
@@ -261,7 +274,47 @@ class WorkspaceShell {
     }
 
     modeLabel(mode) {
-        return ({ camera: '相機', select: '選取', point: '單點', brush: '筆刷', eraser: '橡皮擦', rectangle: '方形', circle: '圓形' })[mode] || '相機';
+        return lang.get(`workspace_mode_${mode}`) || lang.get('workspace_mode_camera');
+    }
+
+    applyLanguage() {
+        const text = (selector, key) => { const element = document.querySelector(selector); if (element) element.textContent = lang.get(key); };
+        const title = (selector, key) => { const element = document.querySelector(selector); if (element) { element.title = lang.get(key); element.setAttribute('aria-label', lang.get(key)); } };
+        text('[data-workspace="draw"]', 'workspace_draw');
+        text('[data-workspace="animate"]', 'workspace_animate');
+        text('[data-workspace="preview"]', 'workspace_preview');
+        text('[data-workspace="export"]', 'workspace_export');
+        text('[data-command="save"]', 'save_project');
+        text('[data-command="export"]', 'workspace_export_yml');
+        title('[data-command="undo"]', 'undo');
+        title('[data-command="redo"]', 'redo');
+        text('[data-left-tab="tools"]', 'workspace_tools');
+        text('[data-left-tab="hierarchy"]', 'workspace_layers');
+        text('[data-left-tab="assets"]', 'workspace_assets');
+        text('[data-left-pane="hierarchy"] .pane-heading strong', 'workspace_scene_hierarchy');
+        text('[data-left-pane="hierarchy"] .pane-heading span', 'workspace_layer_groups');
+        text('[data-left-pane="assets"] .pane-heading strong', 'asset_library');
+        text('[data-left-pane="assets"] .pane-heading span', 'workspace_image_to_particles');
+        text('#viewport-toolbar [data-command="frame"]', 'workspace_focus');
+        text('#viewport-toolbar [data-command="grid"]', 'workspace_grid');
+        text('#viewport-toolbar [data-command="character"]', 'workspace_character');
+        text('[data-preview-action="restart"]', 'workspace_restart');
+        text('#quick-start-title', 'workspace_quick_start_title');
+        text('#quick-start-description', 'workspace_quick_start_description');
+        text('[data-start-action="new"]', 'workspace_new_creation');
+        text('[data-start-action="load"]', 'workspace_load_yml');
+        text('[data-role="yml-dropzone"] strong', 'workspace_drop_yml');
+        text('[data-role="yml-dropzone"] small', 'workspace_yml_types');
+        text('#preview-hud > span:nth-of-type(1)', 'workspace_loop_preview');
+        text('#export-workflow > div:nth-child(1) strong', 'workspace_export_validate');
+        text('#export-workflow > div:nth-child(2) strong', 'workspace_export_optimize');
+        text('#export-workflow > div:nth-child(3) strong', 'workspace_export_output');
+        text('#export-workflow > div:nth-child(1) small', 'workspace_export_validate_hint');
+        text('#export-workflow > div:nth-child(2) small', 'workspace_export_optimize_hint');
+        text('#export-workflow > div:nth-child(3) small', 'workspace_export_output_hint');
+        text('[data-role="status-save"]', 'workspace_autosaved');
+        const select = document.querySelector('#language-select');
+        if (select) select.value = lang.currentLang;
     }
 
     framePreview() {

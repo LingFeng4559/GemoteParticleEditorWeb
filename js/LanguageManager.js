@@ -9,7 +9,8 @@ class LanguageManager {
             'zh_cn': zh_cn,
             'en': en
         };
-        this.currentLang = localStorage.getItem('app-language') || 'zh_tw';
+        const savedLanguage = localStorage.getItem('app-language');
+        this.currentLang = this.languages[savedLanguage] ? savedLanguage : 'zh_tw';
         this.translations = this.languages[this.currentLang];
     }
 

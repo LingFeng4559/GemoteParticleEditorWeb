@@ -1168,6 +1168,7 @@ input[type="range"]:hover::-webkit-slider-thumb { background-color: var(--primar
 #workspace-topbar button:hover { color: #e2e8f0; background: #1e293b; }
 #workspace-topbar button.active, #workspace-topbar .workspace-switcher button.active { color: #e0f2fe; background: #075985; }
 .global-actions { display: flex; justify-content: flex-end; align-items: center; gap: 5px; }
+#workspace-topbar #language-select { max-width: 108px; min-height: 28px; color: #dbe7f4; background: #1e293b; border-color: #475569; }
 #workspace-topbar .preview-command { color: #bae6fd; border: 1px solid #075985; }
 #workspace-topbar .export-command { color: #052e16; background: #4ade80; font-weight: 700; }
 #workspace-topbar .export-command:hover { color: #052e16; background: #86efac; }

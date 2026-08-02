@@ -1,5 +1,6 @@
 import { normalizeTransform } from './AnimationModel.js';
 import { advanceTimelineTick, applySpinDirection, buildOrbitModifier, buildSpinModifier, buildTransformFromValues, calculateParticleCenter, removeKeyframesAtTick, removeModifierByType, removeTimelineItem, replaceModifierByType, spinDirection, upsertTransformKeyframes } from './TimelineControlModel.js';
+import lang from '../LanguageManager.js';
 
 class TimelinePanel {
     constructor(stateManager) {
@@ -123,6 +124,8 @@ class TimelinePanel {
             input.addEventListener('change', () => { this.cancelScheduledCommit('orbit'); this.commitOrbit(); });
         });
         this.controlsRoot.querySelectorAll('[data-preset]').forEach(button => button.addEventListener('click', () => this.addPreset(button.dataset.preset)));
+        window.addEventListener('languageChanged', () => { this.applyLanguage(); this.update(this.stateManager.getState()); });
+        this.applyLanguage();
     }
 
     scheduleCommit(kind) {
@@ -256,7 +259,7 @@ class TimelinePanel {
 
     update(state) {
         const layer = state.drawingGroups.find(item => item.id === state.selectedGroup?.id);
-        this.root.querySelector('[data-role="selection"]').textContent = layer ? `編輯：${layer.name}` : '請選取圖層';
+        this.root.querySelector('[data-role="selection"]').textContent = layer ? lang.get('timeline_editing', { name: layer.name }) : lang.get('timeline_select_layer');
         this.controlsRoot.style.opacity = layer ? '1' : '.45';
         this.root.querySelector('[data-role="scrubber"]').max = Math.max(0, state.timelineDuration - state.timelineFrameInterval);
         this.root.querySelector('[data-role="scrubber"]').step = state.timelineFrameInterval;
@@ -305,7 +308,7 @@ class TimelinePanel {
     renderTracks(layer, state) {
         const root = this.root.querySelector('[data-role="tracks"]');
         if (!layer) {
-            root.innerHTML = '<div class="track-empty">從圖層面板選取圖層，即可查看關鍵影格與修改器作用區間</div>';
+            root.innerHTML = `<div class="track-empty">${lang.get('timeline_empty')}</div>`;
             return;
         }
         const duration = Math.max(1, Number(state.timelineDuration) || 80);
@@ -321,7 +324,7 @@ class TimelinePanel {
         modifiers.forEach(modifier => rows.push({
             id: modifier.id,
             kind: 'modifier',
-            label: `${modifier.type || 'Modifier'} · 作用區間`,
+            label: `${modifier.type || 'Modifier'} · ${lang.get('timeline_effect_range')}`,
             range: [Number(modifier.startTick) || 0, (Number(modifier.startTick) || 0) + (Number(modifier.duration) || duration)],
             enabled: modifier.enabled !== false
         }));
@@ -342,6 +345,39 @@ class TimelinePanel {
 
     escapeHtml(value) {
         return String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
+    }
+
+    applyLanguage() {
+        const text = (selector, key) => { const element = this.root.querySelector(selector) || this.controlsRoot.querySelector(selector); if (element) element.textContent = lang.get(key); };
+        const label = (selector, key) => {
+            const input = this.root.querySelector(selector) || this.controlsRoot.querySelector(selector);
+            const target = input?.closest('label');
+            const node = target ? [...target.childNodes].find(item => item.nodeType === Node.TEXT_NODE && item.textContent.trim()) : null;
+            if (node) node.textContent = `${lang.get(key)} `;
+        };
+        text('.timeline-title strong', 'timeline_title');
+        label('[data-role="frame-interval"]', 'timeline_frame_interval');
+        label('[data-role="frame-count"]', 'timeline_frame_count');
+        const total = this.root.querySelector('.timeline-total');
+        if (total?.firstChild) total.firstChild.textContent = `${lang.get('timeline_total_length')} `;
+        const legends = this.controlsRoot.querySelectorAll('legend');
+        ['timeline_transform', 'timeline_keyframes', 'timeline_spin', 'timeline_orbit', 'timeline_procedural'].forEach((key, index) => { if (legends[index]) legends[index].textContent = lang.get(key); });
+        label('[data-spin="enabled"]', 'timeline_enabled'); label('[data-spin="axis"]', 'timeline_axis'); label('[data-spin="direction"]', 'timeline_direction');
+        label('[data-spin="from"]', 'timeline_start_degrees'); label('[data-spin="to"]', 'timeline_end_degrees'); label('[data-spin="startTick"]', 'timeline_start_tick');
+        label('[data-spin="duration"]', 'timeline_duration'); label('[data-spin="easing"]', 'timeline_easing');
+        text('[data-spin-action="remove"]', 'timeline_delete_spin');
+        text('[data-transform-action="center"]', 'timeline_pivot_center'); text('[data-transform-action="copy"]', 'timeline_copy');
+        text('[data-transform-action="paste"]', 'timeline_paste'); text('[data-transform-action="reset"]', 'timeline_reset');
+        text('[data-key-action="add"]', 'timeline_add_current_transform'); text('[data-key-action="remove"]', 'timeline_delete_current_tick');
+        label('[data-timing="startTick"]', 'timeline_start'); label('[data-timing="duration"]', 'timeline_duration');
+        label('[data-timing="loop"]', 'timeline_loop'); label('[data-timing="loopMode"]', 'timeline_mode');
+        label('[data-orbit="enabled"]', 'timeline_enabled'); label('[data-orbit="axis"]', 'timeline_axis'); label('[data-orbit="radius"]', 'timeline_radius');
+        label('[data-orbit="from"]', 'timeline_start_degrees'); label('[data-orbit="to"]', 'timeline_end_degrees'); label('[data-orbit="startTick"]', 'timeline_start_tick');
+        label('[data-orbit="duration"]', 'timeline_duration'); label('[data-orbit="facePath"]', 'timeline_face_path');
+        text('[data-preset="wave"]', 'timeline_add_wave'); text('[data-preset="noise"]', 'timeline_add_noise');
+        text('[data-preset="counter-left"]', 'timeline_left_spin'); text('[data-preset="counter-right"]', 'timeline_right_spin');
+        const direction = this.controlsRoot.querySelector('[data-spin="direction"]');
+        if (direction) { direction.options[0].textContent = lang.get('timeline_left'); direction.options[1].textContent = lang.get('timeline_right'); }
     }
 
     animate(time) {
