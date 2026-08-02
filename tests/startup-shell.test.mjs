@@ -17,3 +17,12 @@ test('startup loader is animated and contains no language-specific message', asy
     assert.match(loaderBlock, /animation:/);
     assert.doesNotMatch(loaderBlock, /[\u3400-\u9fff]/);
 });
+
+test('quick start asks for language before choosing a project action', async () => {
+    const workspace = await readFile(new URL('../js/WorkspaceShell.js', import.meta.url), 'utf8');
+    const languagePosition = workspace.indexOf('id="quick-start-language"');
+    const actionsPosition = workspace.indexOf('class="quick-start-actions"');
+    assert.ok(languagePosition > 0, 'quick-start language selector is missing');
+    assert.ok(actionsPosition > languagePosition, 'language must appear before project actions');
+    assert.match(workspace, /quick-start-language[^]*lang\.setLanguage/);
+});

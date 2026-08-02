@@ -59,6 +59,16 @@ class WorkspaceShell {
                 <span class="quick-start-mark">✦</span>
                 <h2 id="quick-start-title">開始建立粒子效果</h2>
                 <p id="quick-start-description">建立空白創作，或載入既有的 YML 繼續編輯。</p>
+                <div class="quick-start-language">
+                    <span class="quick-start-step" aria-hidden="true">1</span>
+                    <label for="quick-start-language"><strong>語言</strong><small>Language</small></label>
+                    <select id="quick-start-language" aria-label="Language">
+                        <option value="zh_tw">繁體中文</option>
+                        <option value="zh_cn">简体中文</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+                <div class="quick-start-choice-label"><span class="quick-start-step" aria-hidden="true">2</span><strong>選擇開始方式</strong></div>
                 <div class="quick-start-actions">
                     <button data-start-action="new" class="primary">＋ 新的創作</button>
                     <button data-start-action="load">↥ 載入 YML</button>
@@ -121,6 +131,7 @@ class WorkspaceShell {
             this.applyLanguage();
             this.update(this.stateManager.getState());
         });
+        document.querySelector('#quick-start-language')?.addEventListener('change', event => lang.setLanguage(event.target.value));
         document.querySelectorAll('.workspace-switcher [data-workspace]').forEach(button => button.addEventListener('click', () => this.setWorkspace(button.dataset.workspace)));
         document.querySelectorAll('[data-left-tab]').forEach(button => button.addEventListener('click', () => this.setLeftTab(button.dataset.leftTab)));
         document.querySelector('#workspace-topbar').addEventListener('click', event => {
@@ -301,6 +312,8 @@ class WorkspaceShell {
         text('[data-preview-action="restart"]', 'workspace_restart');
         text('#quick-start-title', 'workspace_quick_start_title');
         text('#quick-start-description', 'workspace_quick_start_description');
+        text('.quick-start-language label strong', 'workspace_language');
+        text('.quick-start-choice-label strong', 'workspace_choose_start');
         text('[data-start-action="new"]', 'workspace_new_creation');
         text('[data-start-action="load"]', 'workspace_load_yml');
         text('[data-role="yml-dropzone"] strong', 'workspace_drop_yml');
@@ -315,6 +328,13 @@ class WorkspaceShell {
         text('[data-role="status-save"]', 'workspace_autosaved');
         const select = document.querySelector('#language-select');
         if (select) select.value = lang.currentLang;
+        const quickStartSelect = document.querySelector('#quick-start-language');
+        if (quickStartSelect) quickStartSelect.value = lang.currentLang;
+        const close = document.querySelector('.quick-start-close');
+        if (close) {
+            close.title = lang.get('workspace_close_start');
+            close.setAttribute('aria-label', lang.get('workspace_close_start'));
+        }
     }
 
     framePreview() {
