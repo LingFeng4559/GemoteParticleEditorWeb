@@ -89,7 +89,7 @@ class CodeGenerator {
         if (!code || code === lang.get('no_points_to_generate')) return;
 
         const state = this.stateManager.getState();
-        const skillId = state.skillId || 'MyDrawingEmote';
+        const skillId = String(state.skillId || '').trim() || 'GemoteParticle';
         this.download(`${skillId}.yml`, code);
     }
 

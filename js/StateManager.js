@@ -19,7 +19,7 @@ class StateManager {
         this.lastPointPosition = null;
         this.hasUnsavedChanges = false;
         this.currentProjectName = '未命名專案';
-        this.skillId = 'MyGemoteEmote'; // 新增：技能 ID
+        this.skillId = 'GemoteParticle'; // 預設匯出為 GemoteParticle.yml
         this.gridSize = 10; // 新增：網格大小
         this.selectedGroup = null; // 新增：當前選中的群組
         this.animationEnabled = false; // 動畫效果：依粒子順序加入 -delay
@@ -622,6 +622,7 @@ class StateManager {
         projectData = migrateProject(projectData);
         this.clearPoints();
         this.currentProjectName = projectData.name || '未命名專案';
+        this.skillId = 'GemoteParticle';
         this.lastPointPosition = null;
         this.selectedGroup = null;
 
@@ -633,7 +634,9 @@ class StateManager {
             this.cameraSensitivity = projectData.settings.cameraSensitivity || 1.0;
             this.particleType = projectData.settings.particleType || 'redstone';
             this.particleColor = projectData.settings.particleColor || '#ff0000';
-            this.skillId = projectData.settings.skillId || 'MyDrawingSkill';
+            const loadedSkillId = String(projectData.settings.skillId || '').trim();
+            const legacyDefaultIds = new Set(['MyDrawingSkill', 'MyDrawingEmote', 'MyGemoteEmote']);
+            this.skillId = !loadedSkillId || legacyDefaultIds.has(loadedSkillId) ? 'GemoteParticle' : loadedSkillId;
             this.gridSize = projectData.settings.gridSize || 10;
             this.animationEnabled = !!projectData.settings.animationEnabled;
             const aTick = parseFloat(projectData.settings.animationTickInterval);
